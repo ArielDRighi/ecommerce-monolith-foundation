@@ -9,8 +9,8 @@ export enum UserRole {
 }
 
 @Entity('users')
-@Index(['email'], { unique: true, where: 'deleted_at IS NULL' })
-@Index(['role'], { where: 'is_active = true' })
+@Index(['email'], { unique: true, where: '"deletedAt" IS NULL' })
+@Index(['role'], { where: '"isActive" = true' })
 export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
@@ -31,6 +31,9 @@ export class User extends BaseEntity {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   lastName?: string;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  phone?: string;
 
   @Column({ type: 'timestamp with time zone', nullable: true })
   lastLoginAt?: Date;
