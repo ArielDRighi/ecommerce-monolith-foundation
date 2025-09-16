@@ -11,6 +11,7 @@ import { Request, Response } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { getCurrentCorrelationId } from '../middleware/correlation-id.middleware';
 import { createErrorResponse } from '../interceptors/transform-response.interceptor';
+import { SENSITIVE_FIELDS, SENSITIVE_HEADERS } from '../constants';
 
 interface ErrorInfo {
   statusCode: number;
@@ -63,7 +64,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
               ? exception.stack
               : 'No stack trace available',
           code,
-          details: this.sanitizeErrorDetails(details),
+          details: this.sanitizeErrorDetails(details, false),
         },
         context: errorContext,
       });
@@ -73,7 +74,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         error: {
           code,
           message,
-          details: this.sanitizeErrorDetails(details),
+          details: this.sanitizeErrorDetails(details, false),
         },
         context: errorContext,
       });
@@ -85,7 +86,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         code,
         message: this.getPublicErrorMessage(statusCode, message),
         details:
-          statusCode < 500 ? this.sanitizeErrorDetails(details) : undefined,
+          statusCode < 500
+            ? this.sanitizeErrorDetails(details, true)
+            : this.sanitizeErrorDetails(details, false),
       },
       {
         timestamp: new Date().toISOString(),
@@ -154,21 +157,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       return undefined;
     }
 
-    const sensitiveFields = [
-      'password',
-      'passwordHash',
-      'token',
-      'accessToken',
-      'refreshToken',
-      'authorization',
-      'secret',
-      'key',
-      'apiKey',
-    ];
-
     const sanitized = { ...body } as Record<string, unknown>;
 
-    for (const field of sensitiveFields) {
+    for (const field of SENSITIVE_FIELDS) {
       if (field in sanitized) {
         sanitized[field] = '[REDACTED]';
       }
@@ -182,14 +173,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
    */
   private sanitizeHeaders(headers: any): Record<string, unknown> {
     const sanitized = { ...headers } as Record<string, unknown>;
-    const sensitiveHeaders = [
-      'authorization',
-      'cookie',
-      'x-api-key',
-      'x-auth-token',
-    ];
 
-    for (const header of sensitiveHeaders) {
+    for (const header of SENSITIVE_HEADERS) {
       if (header in sanitized) {
         sanitized[header] = '[REDACTED]';
       }
@@ -203,24 +188,26 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   }
 
   /**
-   * Sanitize error details to remove sensitive information
+   * Sanitize error details to remove sensitive information.
+   * @param details The error details object.
+   * @param removeStack If true, remove stack traces (for client-facing errors).
    */
-  private sanitizeErrorDetails(details: any): unknown {
+  private sanitizeErrorDetails(details: any, removeStack = true): unknown {
     if (!details || typeof details !== 'object') {
       return details;
     }
 
     const sanitized = { ...details } as Record<string, unknown>;
 
-    // Remove stack traces from client-facing errors
-    if ('stack' in sanitized) {
+    // Remove stack traces from client-facing errors only
+    if (removeStack && 'stack' in sanitized) {
       delete sanitized.stack;
     }
 
     // Recursively sanitize nested objects
     for (const key in sanitized) {
       if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
-        sanitized[key] = this.sanitizeErrorDetails(sanitized[key]);
+        sanitized[key] = this.sanitizeErrorDetails(sanitized[key], removeStack);
       }
     }
 

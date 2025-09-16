@@ -10,6 +10,7 @@ import { Request, Response } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { getCurrentCorrelationId } from '../middleware/correlation-id.middleware';
 import { createErrorResponse } from '../interceptors/transform-response.interceptor';
+import { SENSITIVE_FIELDS } from '../constants';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -108,6 +109,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
     errorDetails: Record<string, unknown>,
   ): string {
     // Use error code from response if available
+    if (errorDetails.code && typeof errorDetails.code === 'string') {
+      return errorDetails.code;
+    }
+
+    // Fallback to error field if code is not available
     if (errorDetails.error && typeof errorDetails.error === 'string') {
       return errorDetails.error;
     }
@@ -215,21 +221,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return undefined;
     }
 
-    const sensitiveFields = [
-      'password',
-      'passwordHash',
-      'token',
-      'accessToken',
-      'refreshToken',
-      'authorization',
-      'secret',
-      'key',
-      'apiKey',
-    ];
-
     const sanitized = { ...body } as Record<string, unknown>;
 
-    for (const field of sensitiveFields) {
+    for (const field of SENSITIVE_FIELDS) {
       if (field in sanitized) {
         sanitized[field] = '[REDACTED]';
       }

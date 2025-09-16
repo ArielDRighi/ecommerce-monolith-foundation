@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Request, Response } from 'express';
 import { getCurrentCorrelationId } from '../middleware/correlation-id.middleware';
+import { API_VERSION } from '../constants';
 
 // Standard API response format
 export interface ApiResponse<T = any> {
@@ -86,7 +87,7 @@ export class TransformResponseInterceptor<T>
               path: request.url,
               method: request.method,
               statusCode: response.statusCode,
-              version: '1.0.0',
+              version: API_VERSION,
             },
             pagination: {
               page: data.page,
@@ -110,7 +111,7 @@ export class TransformResponseInterceptor<T>
             path: request.url,
             method: request.method,
             statusCode: response.statusCode,
-            version: '1.0.0',
+            version: API_VERSION,
           },
         };
       }),
@@ -140,7 +141,7 @@ export const createErrorResponse = (
     error,
     meta: {
       ...meta,
-      version: '1.0.0',
+      version: API_VERSION,
     },
   };
 };

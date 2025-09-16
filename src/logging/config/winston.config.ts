@@ -3,6 +3,15 @@ import DailyRotateFile from 'winston-daily-rotate-file';
 import { ConfigService } from '@nestjs/config';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import {
+  DEFAULT_LOG_LEVEL,
+  DEFAULT_LOG_DIR,
+  DEFAULT_LOG_MAX_FILES,
+  DEFAULT_LOG_MAX_SIZE,
+  DEFAULT_LOG_DATE_PATTERN,
+  DEFAULT_ENVIRONMENT,
+  SERVICE_NAME,
+} from '../constants';
 
 export interface LoggerConfig {
   level: string;
@@ -15,12 +24,15 @@ export interface LoggerConfig {
 
 export const createWinstonLogger = (configService: ConfigService) => {
   const loggerConfig: LoggerConfig = {
-    level: configService.get<string>('LOG_LEVEL', 'info'),
-    logDir: configService.get<string>('LOG_DIR', './logs'),
-    maxFiles: configService.get<string>('LOG_MAX_FILES', '14d'),
-    maxSize: configService.get<string>('LOG_MAX_SIZE', '20m'),
-    datePattern: configService.get<string>('LOG_DATE_PATTERN', 'YYYY-MM-DD'),
-    environment: configService.get<string>('NODE_ENV', 'development'),
+    level: configService.get<string>('LOG_LEVEL', DEFAULT_LOG_LEVEL),
+    logDir: configService.get<string>('LOG_DIR', DEFAULT_LOG_DIR),
+    maxFiles: configService.get<string>('LOG_MAX_FILES', DEFAULT_LOG_MAX_FILES),
+    maxSize: configService.get<string>('LOG_MAX_SIZE', DEFAULT_LOG_MAX_SIZE),
+    datePattern: configService.get<string>(
+      'LOG_DATE_PATTERN',
+      DEFAULT_LOG_DATE_PATTERN,
+    ),
+    environment: configService.get<string>('NODE_ENV', DEFAULT_ENVIRONMENT),
   };
 
   // Ensure log directory exists
@@ -100,7 +112,7 @@ export const createWinstonLogger = (configService: ConfigService) => {
     level: loggerConfig.level,
     format: structuredFormat,
     defaultMeta: {
-      service: 'ecommerce-monolith',
+      service: configService.get<string>('SERVICE_NAME', SERVICE_NAME),
       environment: loggerConfig.environment,
     },
     transports: loggerTransports,
