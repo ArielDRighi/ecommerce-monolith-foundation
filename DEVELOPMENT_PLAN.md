@@ -8,7 +8,29 @@ Maestría en la construcción de un único servicio (monolito) que sea robusto, 
 
 ### **Dominio del Proyecto:**
 
-Un e-commerce que necesita gestionar su catál## 📅 **Timeline Optimizado para el Monolito**
+Un e-commerce que necesita gestionar su catálogo de productos y los usuarios que pueden comprarlos. Problema universal y fácil de entender.
+
+### **� FUNCIONALIDADES EXACTAS A DESARROLLAR:**
+
+**⚠️ IMPORTANTE: NO desarrollaremos carrito de compras ni órdenes. Solo lo siguiente:**
+
+- ✅ **Registro y autenticación de Usuarios** (con JWT: access y refresh tokens)
+- ✅ **Roles y Permisos** (ADMIN vs. CUSTOMER)
+- 🔄 **CRUD completo de Productos** (solo para administradores)
+- 📋 **Endpoint público** para listar/buscar productos con filtrado y paginación eficientes
+
+### **🏆 COMPLEJIDAD A DEMOSTRAR ("Los detalles exquisitos"):**
+
+- ✅ **Optimización de Base de Datos:** Índices estratégicos para acelerar búsquedas
+- ⭐ **Sistema de Logging Profesional:** Structured logging + Interceptors + Exception Filters
+- 📋 **Testing Riguroso:** Cobertura >90% (unitarios, integración, E2E)
+- ✅ **Containerización Profesional:** Todo se levanta con `docker-compose up`
+- 📋 **CI/CD:** Pipeline automatizado en GitHub Actions
+- ✅ **Documentación de API:** Autogenerada con Swagger/OpenAPI
+
+---
+
+## 📅 **Timeline Optimizado para el Monolito**
 
 | Paso | Enfoque                            | Estado         | Tiempo |
 | ---- | ---------------------------------- | -------------- | ------ |
@@ -20,22 +42,7 @@ Un e-commerce que necesita gestionar su catál## 📅 **Timeline Optimizado para
 | 5    | CI/CD + Docker Optimization        | 📋 PLANIFICADO | ~2h    |
 | 6    | Docs + Swagger + Pulimiento        | 📋 PLANIFICADO | ~1h    |
 
-**Total Estimado:** ~18 horas → **Un monolito de clase enterprise con observabilidad profesional**ctos y los usuarios que pueden comprarlos. Problema universal y fácil de entender.
-
-### **Funcionalidades Clave del Proyecto:**
-
-- ✅ **Registro y autenticación de Usuarios** (con JWT: access y refresh tokens)
-- ✅ **Roles y Permisos** (ADMIN vs. CUSTOMER)
-- 🔄 **CRUD completo de Productos** (solo para administradores)
-- 📋 **Endpoint público** para listar/buscar productos con filtrado y paginación eficientes
-
-### **Complejidad a Demostrar ("Los detalles exquisitos"):**
-
-- ✅ **Optimización de Base de Datos:** Índices estratégicos para acelerar búsquedas
-- 📋 **Testing Riguroso:** Cobertura >90% (unitarios, integración, E2E)
-- ✅ **Containerización Profesional:** Todo se levanta con `docker-compose up`
-- 📋 **CI/CD:** Pipeline automatizado en GitHub Actions
-- ✅ **Documentación de API:** Autogenerada con Swagger/OpenAPI
+**Total Estimado:** ~18 horas → **Un monolito de clase enterprise con observabilidad profesional**
 
 ---
 
@@ -348,22 +355,7 @@ Este proyecto demuestra:
 
 ---
 
-## � **Timeline Optimizado para el Monolito**
-
-| Paso | Enfoque                            | Estado         | Tiempo |
-| ---- | ---------------------------------- | -------------- | ------ |
-| 1    | Autenticación + Roles              | ✅ COMPLETADO  | ~4h    |
-| 2    | CRUD Productos (Admin)             | 🔄 EN PROGRESO | ~3h    |
-| 3    | Optimización BD + Búsqueda Pública | 📋 PLANIFICADO | ~2h    |
-| 4    | Testing Riguroso (>90%)            | 📋 PLANIFICADO | ~4h    |
-| 5    | CI/CD + Docker Optimization        | 📋 PLANIFICADO | ~2h    |
-| 6    | Docs + Swagger + Pulimiento        | 📋 PLANIFICADO | ~1h    |
-
-**Total Estimado:** ~16 horas → **Un monolito de clase enterprise**
-
----
-
-## 🔄 **Próximo Paso Crítico**
+## **Próximo Paso Crítico**
 
 **Continuar PASO 2:** CRUD de Productos (solo administradores)
 
@@ -389,15 +381,6 @@ src/
 ├── common/        ✅ BASE ESTABLECIDA - Entidades base, utils
 ├── config/        ✅ COMPLETADO - Variables, TypeORM, JWT
 ├── logging/       ⭐ NUEVO - Structured logging, interceptors, filters
-└── database/      ✅ COMPLETADO - Migraciones, seeds, índices
-```
-
-```
-src/
-├── auth/          ✅ COMPLETADO - Registro, login, roles JWT
-├── products/      🔄 EN PROGRESO - CRUD admin + búsqueda pública
-├── common/        ✅ BASE ESTABLECIDA - Entidades base, utils
-├── config/        ✅ COMPLETADO - Variables, TypeORM, JWT
 └── database/      ✅ COMPLETADO - Migraciones, seeds, índices
 ```
 
@@ -440,9 +423,7 @@ src/
 
 - ✅ Sistema de autenticación completo y seguro
 - 🔄 CRUD de productos con roles diferenciados
-- 📋 Carrito de compras funcional
-- 📋 Sistema de órdenes end-to-end
-- 📋 Búsqueda pública optimizada
+- 📋 Búsqueda pública optimizada con filtros y paginación
 
 ### **Calidad de Código:**
 
@@ -462,18 +443,19 @@ src/
 
 ---
 
-## 📅 **Timeline Estimado**
+## 📅 **Timeline Final Correcto**
 
-| Paso | Descripción             | Estado         | Tiempo Estimado |
-| ---- | ----------------------- | -------------- | --------------- |
-| 1    | Módulo de Autenticación | ✅ COMPLETADO  | ~4-6 horas      |
-| 2    | CRUD de Productos       | 🔄 EN PROGRESO | ~3-4 horas      |
-| 3    | Sistema de Carrito      | 📋 PLANIFICADO | ~2-3 horas      |
-| 4    | Sistema de Órdenes      | 📋 PLANIFICADO | ~3-4 horas      |
-| 5    | Testing Exhaustivo      | 📋 PLANIFICADO | ~2-3 horas      |
-| 6    | DevOps y Docs           | 📋 PLANIFICADO | ~1-2 horas      |
+| Paso | Descripción                    | Estado         | Tiempo Estimado |
+| ---- | ------------------------------ | -------------- | --------------- |
+| 1    | Módulo de Autenticación        | ✅ COMPLETADO  | ~4 horas        |
+| 2    | CRUD de Productos (Admin)      | 🔄 EN PROGRESO | ~3 horas        |
+| 2.5  | Sistema de Logging Profesional | 📋 PLANIFICADO | ~2 horas        |
+| 3    | Optimización BD + Búsqueda     | 📋 PLANIFICADO | ~2 horas        |
+| 4    | Testing Exhaustivo (>90%)      | 📋 PLANIFICADO | ~4 horas        |
+| 5    | CI/CD + Docker Optimization    | 📋 PLANIFICADO | ~2 horas        |
+| 6    | Documentación + Swagger        | 📋 PLANIFICADO | ~1 hora         |
 
-**Total Estimado:** ~15-22 horas de desarrollo
+**Total Estimado:** ~18 horas de desarrollo → **Monolito Enterprise-Grade**
 
 ---
 
@@ -486,4 +468,4 @@ src/
 3. **Desarrollar ProductsController** con endpoints diferenciados por rol
 4. **Testing** de funcionalidades admin vs públicas
 
-Este paso habilitará la gestión completa de productos y la búsqueda pública, estableciendo las bases para el carrito y órdenes.
+Este paso habilitará la gestión completa de productos y la búsqueda pública, completando el core del "Gestor de Catálogo y Usuarios".
