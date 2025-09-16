@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { ProductsService } from '../products/products.service';
 
@@ -31,6 +31,8 @@ interface BenchmarkResult {
 @ApiTags('Performance Analytics')
 @Controller('analytics')
 export class AnalyticsController {
+  private readonly logger = new Logger(AnalyticsController.name);
+
   constructor(private readonly productsService: ProductsService) {}
 
   @Get('dashboard')
@@ -160,38 +162,54 @@ export class AnalyticsController {
   ): Promise<BenchmarkResult> {
     const startTime = performance.now();
 
-    const searchParams = {
-      search: search || 'Samsung',
-      categoryId: category,
-      minPrice: minPrice || 100,
-      maxPrice: maxPrice || 1000,
-      page: 1,
-      limit: 20,
-    };
+    try {
+      const searchParams = {
+        search: search || 'Samsung',
+        categoryId: category,
+        minPrice: minPrice || 100,
+        maxPrice: maxPrice || 1000,
+        page: 1,
+        limit: 20,
+      };
 
-    const results = await this.productsService.searchProducts(searchParams);
-    const executionTime = performance.now() - startTime;
+      const results = await this.productsService.searchProducts(searchParams);
+      const executionTime = performance.now() - startTime;
 
-    const performanceRating =
-      executionTime < 50
-        ? 'Excellent'
-        : executionTime < 100
-          ? 'Good'
-          : 'Needs Improvement';
+      const performanceRating =
+        executionTime < 50
+          ? 'Excellent'
+          : executionTime < 100
+            ? 'Good'
+            : 'Needs Improvement';
 
-    return {
-      operation: `Search: "${searchParams.search}" with filters`,
-      executionTime: Number(executionTime.toFixed(2)),
-      resultCount: results.data.length,
-      timestamp: new Date().toISOString(),
-      optimizationApplied: [
-        'Composite B-Tree indexes',
-        'GIN full-text search',
-        'Query optimization',
-        'Index-aware sorting',
-      ],
-      performanceRating,
-    };
+      return {
+        operation: `Search: "${searchParams.search}" with filters`,
+        executionTime: Number(executionTime.toFixed(2)),
+        resultCount: results.data.length,
+        timestamp: new Date().toISOString(),
+        optimizationApplied: [
+          'Composite B-Tree indexes',
+          'GIN full-text search',
+          'Query optimization',
+          'Index-aware sorting',
+        ],
+        performanceRating,
+      };
+    } catch (error) {
+      this.logger.error(
+        'Search benchmark failed',
+        error instanceof Error ? error.stack : error,
+      );
+      const executionTime = performance.now() - startTime;
+      return {
+        operation: 'Search benchmark (failed)',
+        executionTime: Number(executionTime.toFixed(2)),
+        resultCount: 0,
+        timestamp: new Date().toISOString(),
+        optimizationApplied: [],
+        performanceRating: 'Needs Improvement',
+      };
+    }
   }
 
   @Get('benchmark/popular')
@@ -202,26 +220,42 @@ export class AnalyticsController {
   async benchmarkPopular(): Promise<BenchmarkResult> {
     const startTime = performance.now();
 
-    const results = await this.productsService.getPopularProducts(20);
-    const executionTime = performance.now() - startTime;
+    try {
+      const results = await this.productsService.getPopularProducts(20);
+      const executionTime = performance.now() - startTime;
 
-    return {
-      operation: 'Popular Products Listing',
-      executionTime: Number(executionTime.toFixed(2)),
-      resultCount: results.length,
-      timestamp: new Date().toISOString(),
-      optimizationApplied: [
-        'Composite index on rating/orderCount',
-        'Conditional WHERE optimization',
-        'Covering indexes for metadata',
-      ],
-      performanceRating:
-        executionTime < 30
-          ? 'Excellent'
-          : executionTime < 60
-            ? 'Good'
-            : 'Needs Improvement',
-    };
+      return {
+        operation: 'Popular Products Listing',
+        executionTime: Number(executionTime.toFixed(2)),
+        resultCount: results.length,
+        timestamp: new Date().toISOString(),
+        optimizationApplied: [
+          'Composite index on rating/orderCount',
+          'Conditional WHERE optimization',
+          'Covering indexes for metadata',
+        ],
+        performanceRating:
+          executionTime < 30
+            ? 'Excellent'
+            : executionTime < 60
+              ? 'Good'
+              : 'Needs Improvement',
+      };
+    } catch (error) {
+      this.logger.error(
+        'Popular products benchmark failed',
+        error instanceof Error ? error.stack : error,
+      );
+      const executionTime = performance.now() - startTime;
+      return {
+        operation: 'Popular Products Listing (failed)',
+        executionTime: Number(executionTime.toFixed(2)),
+        resultCount: 0,
+        timestamp: new Date().toISOString(),
+        optimizationApplied: [],
+        performanceRating: 'Needs Improvement',
+      };
+    }
   }
 
   @Get('benchmark/recent')
@@ -232,26 +266,42 @@ export class AnalyticsController {
   async benchmarkRecent(): Promise<BenchmarkResult> {
     const startTime = performance.now();
 
-    const results = await this.productsService.getRecentProducts(20);
-    const executionTime = performance.now() - startTime;
+    try {
+      const results = await this.productsService.getRecentProducts(20);
+      const executionTime = performance.now() - startTime;
 
-    return {
-      operation: 'Recent Products Listing',
-      executionTime: Number(executionTime.toFixed(2)),
-      resultCount: results.length,
-      timestamp: new Date().toISOString(),
-      optimizationApplied: [
-        'Temporal indexing on createdAt',
-        'Active records filtering',
-        'Optimized sorting strategy',
-      ],
-      performanceRating:
-        executionTime < 25
-          ? 'Excellent'
-          : executionTime < 50
-            ? 'Good'
-            : 'Needs Improvement',
-    };
+      return {
+        operation: 'Recent Products Listing',
+        executionTime: Number(executionTime.toFixed(2)),
+        resultCount: results.length,
+        timestamp: new Date().toISOString(),
+        optimizationApplied: [
+          'Temporal indexing on createdAt',
+          'Active records filtering',
+          'Optimized sorting strategy',
+        ],
+        performanceRating:
+          executionTime < 25
+            ? 'Excellent'
+            : executionTime < 50
+              ? 'Good'
+              : 'Needs Improvement',
+      };
+    } catch (error) {
+      this.logger.error(
+        'Recent products benchmark failed',
+        error instanceof Error ? error.stack : error,
+      );
+      const executionTime = performance.now() - startTime;
+      return {
+        operation: 'Recent Products Listing (failed)',
+        executionTime: Number(executionTime.toFixed(2)),
+        resultCount: 0,
+        timestamp: new Date().toISOString(),
+        optimizationApplied: [],
+        performanceRating: 'Needs Improvement',
+      };
+    }
   }
 
   @Get('benchmark/category')
@@ -269,30 +319,46 @@ export class AnalyticsController {
   ): Promise<BenchmarkResult> {
     const startTime = performance.now();
 
-    const results = await this.productsService.getProductsByCategory(
-      categoryId,
-      1,
-      20,
-    );
-    const executionTime = performance.now() - startTime;
+    try {
+      const results = await this.productsService.getProductsByCategory(
+        categoryId,
+        1,
+        20,
+      );
+      const executionTime = performance.now() - startTime;
 
-    return {
-      operation: `Category Products (ID: ${categoryId})`,
-      executionTime: Number(executionTime.toFixed(2)),
-      resultCount: results.data.length,
-      timestamp: new Date().toISOString(),
-      optimizationApplied: [
-        'Many-to-many relationship indexing',
-        'Junction table optimization',
-        'Composite key indexing',
-      ],
-      performanceRating:
-        executionTime < 40
-          ? 'Excellent'
-          : executionTime < 80
-            ? 'Good'
-            : 'Needs Improvement',
-    };
+      return {
+        operation: `Category Products (ID: ${categoryId})`,
+        executionTime: Number(executionTime.toFixed(2)),
+        resultCount: results.data.length,
+        timestamp: new Date().toISOString(),
+        optimizationApplied: [
+          'Many-to-many relationship indexing',
+          'Junction table optimization',
+          'Composite key indexing',
+        ],
+        performanceRating:
+          executionTime < 40
+            ? 'Excellent'
+            : executionTime < 80
+              ? 'Good'
+              : 'Needs Improvement',
+      };
+    } catch (error) {
+      this.logger.error(
+        'Category benchmark failed',
+        error instanceof Error ? error.stack : error,
+      );
+      const executionTime = performance.now() - startTime;
+      return {
+        operation: `Category Products (ID: ${categoryId}) (failed)`,
+        executionTime: Number(executionTime.toFixed(2)),
+        resultCount: 0,
+        timestamp: new Date().toISOString(),
+        optimizationApplied: [],
+        performanceRating: 'Needs Improvement',
+      };
+    }
   }
 
   @Get('system-info')

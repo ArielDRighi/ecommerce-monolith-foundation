@@ -270,7 +270,7 @@ export class ProductsService {
     searchDto: ProductSearchDto,
   ): void {
     // Optimized text search using our performance indexes
-    if (searchDto.search) {
+    if (searchDto.search && searchDto.search.trim().length > 0) {
       const searchTerm = searchDto.search.trim();
 
       // Use different search strategies based on search term characteristics
@@ -327,10 +327,14 @@ export class ProductsService {
     }
 
     // Rating filter (leverages idx_products_rating for better performance)
-    if (searchDto.minRating !== undefined) {
-      queryBuilder.andWhere('product.rating >= :minRating', {
-        minRating: searchDto.minRating,
-      });
+    // Handle NULL ratings correctly - include products without rating when no filter is applied
+    if (searchDto.minRating !== undefined && searchDto.minRating !== null) {
+      queryBuilder.andWhere(
+        '(product.rating >= :minRating OR product.rating IS NULL)',
+        {
+          minRating: searchDto.minRating,
+        },
+      );
     }
   }
 
@@ -519,7 +523,7 @@ export class ProductsService {
     searchDto: ProductSearchDto,
   ): void {
     // Optimized text search using our performance indexes
-    if (searchDto.search) {
+    if (searchDto.search && searchDto.search.trim().length > 0) {
       const searchTerm = searchDto.search.trim();
 
       if (searchTerm.length >= 3) {
@@ -575,11 +579,14 @@ export class ProductsService {
       queryBuilder.andWhere('product.stock > 0');
     }
 
-    // Rating filter
-    if (searchDto.minRating !== undefined) {
-      queryBuilder.andWhere('product.rating >= :minRating', {
-        minRating: searchDto.minRating,
-      });
+    // Rating filter - Handle NULL ratings correctly
+    if (searchDto.minRating !== undefined && searchDto.minRating !== null) {
+      queryBuilder.andWhere(
+        '(product.rating >= :minRating OR product.rating IS NULL)',
+        {
+          minRating: searchDto.minRating,
+        },
+      );
     }
   }
 
