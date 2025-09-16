@@ -1,6 +1,7 @@
 import { Entity, Column, OneToMany, Index } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { BaseEntity } from '../../common/entities/base.entity';
+import { Product } from '../../products/entities/product.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -41,8 +42,8 @@ export class User extends BaseEntity {
   emailVerifiedAt?: Date;
 
   // Relations
-  @OneToMany('Product', 'createdBy')
-  products: any[];
+  @OneToMany(() => Product, (product) => product.createdBy)
+  products: Product[];
 
   // Virtual fields
   get fullName(): string {

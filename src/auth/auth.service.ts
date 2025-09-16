@@ -60,9 +60,15 @@ export class AuthService {
 
     try {
       await this.userRepository.save(user);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle potential database constraints
-      if ((error as { code?: string })?.code === '23505') {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        typeof (error as { code?: unknown }).code === 'string' &&
+        (error as { code: string }).code === '23505'
+      ) {
         // PostgreSQL unique violation
         throw new ConflictException('User with this email already exists');
       }
@@ -224,8 +230,8 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role,
       phone: user.phone,
       isActive: user.isActive,
