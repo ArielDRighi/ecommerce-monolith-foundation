@@ -132,8 +132,34 @@ export class ProductsService {
       }
     }
 
-    // Update product fields
-    Object.assign(product, updateProductDto);
+    // Update product fields explicitly for safety
+    if (updateProductDto.name !== undefined) {
+      product.name = updateProductDto.name;
+    }
+    if (updateProductDto.description !== undefined) {
+      product.description = updateProductDto.description;
+    }
+    if (updateProductDto.price !== undefined) {
+      product.price = updateProductDto.price;
+    }
+    if (updateProductDto.slug !== undefined) {
+      product.slug = updateProductDto.slug;
+    }
+    if (updateProductDto.stock !== undefined) {
+      product.stock = updateProductDto.stock;
+    }
+    if (updateProductDto.sku !== undefined) {
+      product.sku = updateProductDto.sku;
+    }
+    if (updateProductDto.images !== undefined) {
+      product.images = updateProductDto.images;
+    }
+    if (updateProductDto.attributes !== undefined) {
+      product.attributes = updateProductDto.attributes;
+    }
+    if (updateProductDto.isActive !== undefined) {
+      product.isActive = updateProductDto.isActive;
+    }
 
     const savedProduct = await this.productRepository.save(product);
 
@@ -171,12 +197,10 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    // Increment view count (fire and forget)
-    this.productRepository
-      .update(id, { viewCount: () => 'view_count + 1' })
-      .catch(() => {
-        // Silent fail for view count increment
-      });
+    // Increment view count (fire and forget, atomic)
+    this.productRepository.increment({ id }, 'viewCount', 1).catch(() => {
+      // Silent fail for view count increment
+    });
 
     return plainToClass(ProductResponseDto, product, {
       excludeExtraneousValues: true,
@@ -364,7 +388,19 @@ export class ProductsService {
       }
     }
 
-    Object.assign(category, updateCategoryDto);
+    // Update category fields explicitly for safety
+    if (updateCategoryDto.name !== undefined) {
+      category.name = updateCategoryDto.name;
+    }
+    if (updateCategoryDto.slug !== undefined) {
+      category.slug = updateCategoryDto.slug;
+    }
+    if (updateCategoryDto.description !== undefined) {
+      category.description = updateCategoryDto.description;
+    }
+    if (updateCategoryDto.isActive !== undefined) {
+      category.isActive = updateCategoryDto.isActive;
+    }
     const savedCategory = await this.categoryRepository.save(category);
 
     return plainToClass(CategoryResponseDto, savedCategory, {
