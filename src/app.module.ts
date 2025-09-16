@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth';
 import { ProductsModule } from './products';
 import { LoggingModule } from './logging';
+import { AnalyticsModule } from './analytics';
 import databaseConfig from './config/database.config';
 import appConfig from './config/app.config';
 import jwtConfig from './config/jwt.config';
@@ -38,6 +39,7 @@ import jwtConfig from './config/jwt.config';
     // Feature modules
     AuthModule,
     ProductsModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

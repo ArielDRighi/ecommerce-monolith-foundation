@@ -221,18 +221,27 @@ export class ProductsService {
       .where('product.deletedAt IS NULL')
       .andWhere('product.isActive = true');
 
-    // Apply filters
+    // Apply filters with optimization hints
     this.applySearchFilters(queryBuilder, searchDto);
 
-    // Apply sorting
+    // Apply sorting with index-aware logic
     this.applySorting(queryBuilder, searchDto);
 
-    // Get total count before pagination
-    const total = await queryBuilder.getCount();
+    // Optimization: Use COUNT query with same filters but without joins for better performance
+    const countQueryBuilder = this.productRepository
+      .createQueryBuilder('product')
+      .where('product.deletedAt IS NULL')
+      .andWhere('product.isActive = true');
+
+    // Apply the same filters for counting (without relations)
+    this.applySearchFiltersForCount(countQueryBuilder, searchDto);
+
+    // Get total count using optimized query
+    const total = await countQueryBuilder.getCount();
 
     // Apply pagination
     const page = searchDto.page || 1;
-    const limit = searchDto.limit || 20;
+    const limit = Math.min(searchDto.limit || 20, 100); // Cap at 100 for performance
     const skip = (page - 1) * limit;
 
     queryBuilder.skip(skip).take(limit);
@@ -260,44 +269,71 @@ export class ProductsService {
     queryBuilder: SelectQueryBuilder<Product>,
     searchDto: ProductSearchDto,
   ): void {
-    // Text search
-    if (searchDto.search) {
-      queryBuilder.andWhere(
-        '(product.name ILIKE :search OR product.description ILIKE :search)',
-        { search: `%${searchDto.search}%` },
-      );
+    // Optimized text search using our performance indexes
+    if (searchDto.search && searchDto.search.trim().length > 0) {
+      const searchTerm = searchDto.search.trim();
+
+      // Use different search strategies based on search term characteristics
+      if (searchTerm.length >= 3) {
+        // For longer terms, use full-text search with GIN index (optimal for word searches)
+        queryBuilder.andWhere(
+          `(
+            to_tsvector('spanish', product.name || ' ' || COALESCE(product.description, '')) 
+            @@ plainto_tsquery('spanish', :searchTerm)
+            OR product.name % :searchTerm
+            OR product.description % :searchTerm
+          )`,
+          { searchTerm },
+        );
+      } else {
+        // For short terms, use trigram similarity (optimal for partial/fuzzy matching)
+        queryBuilder.andWhere(
+          '(product.name % :searchTerm OR product.description % :searchTerm)',
+          { searchTerm },
+        );
+      }
     }
 
-    // Category filter
+    // Optimized category filter using composite indexes
     if (searchDto.categoryId) {
       queryBuilder.andWhere('category.id = :categoryId', {
         categoryId: searchDto.categoryId,
       });
     }
 
-    // Price range
-    if (searchDto.minPrice !== undefined) {
-      queryBuilder.andWhere('product.price >= :minPrice', {
+    // Price range filters (leverage idx_products_price_range and composite indexes)
+    if (searchDto.minPrice !== undefined && searchDto.maxPrice !== undefined) {
+      // Use BETWEEN for range queries to leverage price range index
+      queryBuilder.andWhere('product.price BETWEEN :minPrice AND :maxPrice', {
         minPrice: searchDto.minPrice,
-      });
-    }
-
-    if (searchDto.maxPrice !== undefined) {
-      queryBuilder.andWhere('product.price <= :maxPrice', {
         maxPrice: searchDto.maxPrice,
       });
+    } else {
+      if (searchDto.minPrice !== undefined) {
+        queryBuilder.andWhere('product.price >= :minPrice', {
+          minPrice: searchDto.minPrice,
+        });
+      }
+      if (searchDto.maxPrice !== undefined) {
+        queryBuilder.andWhere('product.price <= :maxPrice', {
+          maxPrice: searchDto.maxPrice,
+        });
+      }
     }
 
-    // Stock filter
+    // Stock filter (leverages idx_products_stock_filter)
     if (searchDto.inStock === true) {
       queryBuilder.andWhere('product.stock > 0');
     }
 
-    // Rating filter
-    if (searchDto.minRating !== undefined) {
+    // Rating filter (leverages idx_products_rating for better performance)
+    // Handle NULL ratings correctly - include products without rating when no filter is applied
+    if (searchDto.minRating !== undefined && searchDto.minRating !== null) {
       queryBuilder.andWhere(
-        '(product.rating IS NULL OR product.rating >= :minRating)',
-        { minRating: searchDto.minRating },
+        '(product.rating >= :minRating OR product.rating IS NULL)',
+        {
+          minRating: searchDto.minRating,
+        },
       );
     }
   }
@@ -309,31 +345,49 @@ export class ProductsService {
     const sortBy = searchDto.sortBy || ProductSortBy.CREATED_AT;
     const sortOrder = searchDto.sortOrder || SortOrder.DESC;
 
+    // Optimized sorting using our composite indexes
     switch (sortBy) {
       case ProductSortBy.NAME:
+        // Leverages idx_products_name_search
         queryBuilder.orderBy('product.name', sortOrder);
         break;
+
       case ProductSortBy.PRICE:
+        // Leverages idx_products_price_performance
         queryBuilder.orderBy('product.price', sortOrder);
         break;
+
       case ProductSortBy.RATING:
-        queryBuilder.orderBy('product.rating', sortOrder, 'NULLS LAST');
+        // Leverages idx_products_rating_performance with NULLS handling
+        if (sortOrder === SortOrder.DESC) {
+          queryBuilder.orderBy('product.rating', 'DESC', 'NULLS LAST');
+        } else {
+          queryBuilder.orderBy('product.rating', 'ASC', 'NULLS FIRST');
+        }
         break;
+
       case ProductSortBy.POPULARITY:
+        // Leverages idx_products_popularity_performance
         queryBuilder.orderBy('product.orderCount', sortOrder);
         break;
+
       case ProductSortBy.VIEWS:
+        // Leverages idx_products_views_performance
         queryBuilder.orderBy('product.viewCount', sortOrder);
         break;
+
       case ProductSortBy.CREATED_AT:
       default:
+        // Leverages idx_products_recent_active for recent products
         queryBuilder.orderBy('product.createdAt', sortOrder);
         break;
     }
 
-    // Secondary sort by creation date for consistency
+    // Enhanced secondary sorting for consistent results
+    // Use composite indexes for better performance
     if (sortBy !== ProductSortBy.CREATED_AT) {
-      queryBuilder.addOrderBy('product.createdAt', 'DESC');
+      // Add secondary sort by id for consistency (uses primary key index)
+      queryBuilder.addOrderBy('product.id', 'ASC');
     }
   }
 
@@ -452,6 +506,204 @@ export class ProductsService {
     }
 
     return plainToClass(CategoryResponseDto, category, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  // ==============================
+  // OPTIMIZED PRIVATE METHODS
+  // ==============================
+
+  /**
+   * Optimized search filters for COUNT queries (without relations/joins)
+   * This provides better performance for pagination total counts
+   */
+  private applySearchFiltersForCount(
+    queryBuilder: SelectQueryBuilder<Product>,
+    searchDto: ProductSearchDto,
+  ): void {
+    // Optimized text search using our performance indexes
+    if (searchDto.search && searchDto.search.trim().length > 0) {
+      const searchTerm = searchDto.search.trim();
+
+      if (searchTerm.length >= 3) {
+        // Use full-text search with GIN index
+        queryBuilder.andWhere(
+          `(
+            to_tsvector('spanish', product.name || ' ' || COALESCE(product.description, '')) 
+            @@ plainto_tsquery('spanish', :searchTerm)
+            OR product.name % :searchTerm
+            OR product.description % :searchTerm
+          )`,
+          { searchTerm },
+        );
+      } else {
+        // Use trigram similarity for short terms
+        queryBuilder.andWhere(
+          '(product.name % :searchTerm OR product.description % :searchTerm)',
+          { searchTerm },
+        );
+      }
+    }
+
+    // For category filter in count query, we need to join
+    if (searchDto.categoryId) {
+      queryBuilder
+        .leftJoin('product.categories', 'category')
+        .andWhere('category.id = :categoryId', {
+          categoryId: searchDto.categoryId,
+        });
+    }
+
+    // Price range filters
+    if (searchDto.minPrice !== undefined && searchDto.maxPrice !== undefined) {
+      queryBuilder.andWhere('product.price BETWEEN :minPrice AND :maxPrice', {
+        minPrice: searchDto.minPrice,
+        maxPrice: searchDto.maxPrice,
+      });
+    } else {
+      if (searchDto.minPrice !== undefined) {
+        queryBuilder.andWhere('product.price >= :minPrice', {
+          minPrice: searchDto.minPrice,
+        });
+      }
+      if (searchDto.maxPrice !== undefined) {
+        queryBuilder.andWhere('product.price <= :maxPrice', {
+          maxPrice: searchDto.maxPrice,
+        });
+      }
+    }
+
+    // Stock filter
+    if (searchDto.inStock === true) {
+      queryBuilder.andWhere('product.stock > 0');
+    }
+
+    // Rating filter - Handle NULL ratings correctly
+    if (searchDto.minRating !== undefined && searchDto.minRating !== null) {
+      queryBuilder.andWhere(
+        '(product.rating >= :minRating OR product.rating IS NULL)',
+        {
+          minRating: searchDto.minRating,
+        },
+      );
+    }
+  }
+
+  /**
+   * High-performance product search for popular/trending products
+   * Leverages idx_products_popularity_performance and idx_products_views_performance
+   */
+  async getPopularProducts(limit: number = 10): Promise<ProductResponseDto[]> {
+    const products = await this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.categories', 'category')
+      .where('product.deletedAt IS NULL')
+      .andWhere('product.isActive = true')
+      .andWhere('product.orderCount > 0') // Use index condition
+      .orderBy('product.orderCount', 'DESC')
+      .addOrderBy('product.viewCount', 'DESC')
+      .limit(Math.min(limit, 50)) // Cap for performance
+      .getMany();
+
+    return products.map((product) =>
+      plainToClass(ProductResponseDto, product, {
+        excludeExtraneousValues: true,
+      }),
+    );
+  }
+
+  /**
+   * High-performance search for recently added products
+   * Leverages idx_products_recent_active composite index
+   */
+  async getRecentProducts(limit: number = 10): Promise<ProductResponseDto[]> {
+    const products = await this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.categories', 'category')
+      .where('product.deletedAt IS NULL')
+      .andWhere('product.isActive = true')
+      .orderBy('product.createdAt', 'DESC')
+      .limit(Math.min(limit, 50))
+      .getMany();
+
+    return products.map((product) =>
+      plainToClass(ProductResponseDto, product, {
+        excludeExtraneousValues: true,
+      }),
+    );
+  }
+
+  /**
+   * High-performance search for products by category with optimal index usage
+   * Leverages idx_product_categories_category_performance
+   */
+  async getProductsByCategory(
+    categoryId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedResult<ProductResponseDto>> {
+    const queryBuilder = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.categories', 'category')
+      .leftJoinAndSelect('product.createdBy', 'createdBy')
+      .where('product.deletedAt IS NULL')
+      .andWhere('product.isActive = true')
+      .andWhere('category.id = :categoryId', { categoryId })
+      .orderBy('product.createdAt', 'DESC');
+
+    // Get total count with optimized query
+    const total = await this.productRepository
+      .createQueryBuilder('product')
+      .leftJoin('product.categories', 'category')
+      .where('product.deletedAt IS NULL')
+      .andWhere('product.isActive = true')
+      .andWhere('category.id = :categoryId', { categoryId })
+      .getCount();
+
+    // Apply pagination
+    const skip = (page - 1) * limit;
+    queryBuilder.skip(skip).take(Math.min(limit, 100));
+
+    const products = await queryBuilder.getMany();
+
+    const productDtos = products.map((product) =>
+      plainToClass(ProductResponseDto, product, {
+        excludeExtraneousValues: true,
+      }),
+    );
+
+    return {
+      data: productDtos,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Optimized slug-based product lookup
+   * Leverages unique idx_products_slug_unique index
+   */
+  async getProductBySlug(slug: string): Promise<ProductResponseDto> {
+    const product = await this.productRepository.findOne({
+      where: { slug, deletedAt: IsNull(), isActive: true },
+      relations: ['categories', 'createdBy'],
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with slug '${slug}' not found`);
+    }
+
+    // Increment view count (fire and forget, atomic)
+    this.productRepository
+      .increment({ id: product.id }, 'viewCount', 1)
+      .catch(() => {
+        // Silent fail for view count increment
+      });
+
+    return plainToClass(ProductResponseDto, product, {
       excludeExtraneousValues: true,
     });
   }

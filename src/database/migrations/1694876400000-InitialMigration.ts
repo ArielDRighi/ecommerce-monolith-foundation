@@ -4,6 +4,11 @@ export class InitialMigration1694876400000 implements MigrationInterface {
   name = 'InitialMigration1694876400000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Create user role enum first
+    await queryRunner.query(`
+      CREATE TYPE "public"."user_role_enum" AS ENUM('admin', 'customer')
+    `);
+
     // Create users table
     await queryRunner.query(`
       CREATE TABLE "users" (
@@ -21,11 +26,6 @@ export class InitialMigration1694876400000 implements MigrationInterface {
         "email_verified_at" TIMESTAMP WITH TIME ZONE,
         CONSTRAINT "PK_users" PRIMARY KEY ("id")
       )
-    `);
-
-    // Create user role enum
-    await queryRunner.query(`
-      CREATE TYPE "public"."user_role_enum" AS ENUM('admin', 'customer')
     `);
 
     // Create categories table

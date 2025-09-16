@@ -166,6 +166,140 @@ export class ProductsController {
   // PUBLIC ENDPOINTS
   // ==============================
 
+  @Get('popular')
+  @ApiOperation({
+    summary: 'Get popular products',
+    description:
+      'High-performance endpoint to get popular/trending products based on order count and views. ' +
+      'Leverages optimized database indexes for fast retrieval.',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of products to return (max 50)',
+    type: Number,
+    example: 10,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Popular products retrieved successfully',
+    type: [ProductResponseDto],
+  })
+  async getPopularProducts(
+    @Query('limit') limit?: number,
+  ): Promise<ProductResponseDto[]> {
+    return this.productsService.getPopularProducts(limit);
+  }
+
+  @Get('recent')
+  @ApiOperation({
+    summary: 'Get recently added products',
+    description:
+      'High-performance endpoint to get recently added products. ' +
+      'Leverages optimized database indexes for fast retrieval.',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of products to return (max 50)',
+    type: Number,
+    example: 10,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Recent products retrieved successfully',
+    type: [ProductResponseDto],
+  })
+  async getRecentProducts(
+    @Query('limit') limit?: number,
+  ): Promise<ProductResponseDto[]> {
+    return this.productsService.getRecentProducts(limit);
+  }
+
+  @Get('category/:categoryId')
+  @ApiOperation({
+    summary: 'Get products by category with pagination',
+    description:
+      'High-performance endpoint to get products by category with pagination. ' +
+      'Optimized for category-based browsing using specialized indexes.',
+  })
+  @ApiParam({
+    name: 'categoryId',
+    description: 'Category UUID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (1-based)',
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of items per page (max 100)',
+    type: Number,
+    example: 20,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Category products retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/ProductResponseDto' },
+        },
+        total: { type: 'number', example: 45 },
+        page: { type: 'number', example: 1 },
+        limit: { type: 'number', example: 20 },
+        totalPages: { type: 'number', example: 3 },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Category not found',
+  })
+  async getProductsByCategory(
+    @Param('categoryId', ParseUUIDPipe) categoryId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ): Promise<PaginatedResult<ProductResponseDto>> {
+    return this.productsService.getProductsByCategory(categoryId, page, limit);
+  }
+
+  @Get('slug/:slug')
+  @ApiOperation({
+    summary: 'Get product by slug',
+    description:
+      'High-performance endpoint to get a product by its slug. ' +
+      'Optimized using unique slug index and increments view count automatically.',
+  })
+  @ApiParam({
+    name: 'slug',
+    description: 'Product slug (URL-friendly identifier)',
+    type: 'string',
+    example: 'gaming-laptop-pro-2024',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Product retrieved successfully',
+    type: ProductResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Product not found or inactive',
+  })
+  async getProductBySlug(
+    @Param('slug') slug: string,
+  ): Promise<ProductResponseDto> {
+    return this.productsService.getProductBySlug(slug);
+  }
+
   @Get('search')
   @ApiOperation({
     summary: 'Search products with filters and pagination',
