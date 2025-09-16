@@ -9,15 +9,14 @@ import {
 } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
 import { User } from '../../auth/entities/user.entity';
-import { Category } from './category.entity';
 
 @Entity('products')
 @Index('IDX_products_name_search', ['name'])
 @Index('IDX_products_price_date_active', ['price', 'createdAt'], {
-  where: 'is_active = true',
+  where: '"isActive" = true',
 })
 @Index('IDX_products_active_created', ['isActive', 'createdAt'], {
-  where: 'is_active = true',
+  where: '"isActive" = true',
 })
 export class Product extends BaseEntity {
   @Column({ type: 'varchar', length: 500 })
@@ -73,7 +72,7 @@ export class Product extends BaseEntity {
   @Column({ name: 'created_by' })
   createdById: string;
 
-  @ManyToMany(() => Category, (category) => category.products, {
+  @ManyToMany('Category', 'products', {
     cascade: true,
   })
   @JoinTable({
@@ -81,7 +80,7 @@ export class Product extends BaseEntity {
     joinColumn: { name: 'product_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'category_id', referencedColumnName: 'id' },
   })
-  categories: Category[];
+  categories: any[];
 
   // Virtual properties
   get isInStock(): boolean {

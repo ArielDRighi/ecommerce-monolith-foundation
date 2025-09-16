@@ -1,10 +1,6 @@
 # E-commerce Catalog Management System# E-commerce Catalog Management System<p align="center">
 
-
-
-**Monolito Impecable - Proyecto Portfolio #1****Monolito Impecable - Proyecto Portfolio #1** <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-
-
+**Monolito Impecable - Proyecto Portfolio #1\*\***Monolito Impecable - Proyecto Portfolio #1\*\* <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 
 [![CI/CD Pipeline](https://github.com/yourusername/ecommerce-monolith-foundation/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/ecommerce-monolith-foundation/actions)</p>
 
@@ -28,7 +24,7 @@ Este proyecto demuestra **maestría en la construcción de un monolito robusto y
 
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/) <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
 
-**Pregunta que responde**: *"¿Puede aplicar disciplina y rigor estratégico en la arquitectura y construcción de software backend de alto rendimiento?"*
+**Pregunta que responde**: _"¿Puede aplicar disciplina y rigor estratégico en la arquitectura y construcción de software backend de alto rendimiento?"_
 
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/) <p align="center">
 
@@ -112,7 +108,7 @@ src/## 🏗️ Arquitectura & Decisiones Técnicas <a href="https://paypal.me/ka
 
 ### Patrón de Arquitectura: Clean Architecture
 
-```mermaid
+`````mermaid
 
 erDiagram````bash
 
@@ -132,7 +128,7 @@ erDiagram````bash
 
     }│   ├── dto/             # Data Transfer Objects con validaciones## Compile and run the project
 
-    
+
 
     PRODUCT {│   ├── entities/        # Entidades de usuario y roles
 
@@ -156,7 +152,7 @@ erDiagram````bash
 
     }│   ├── dto/             # DTOs con validaciones complejas# watch mode
 
-    
+
 
     CATEGORY {│   ├── entities/        # Entidades con relaciones optimizadas$ npm run start:dev
 
@@ -172,7 +168,7 @@ erDiagram````bash
 
     }├── common/              # Módulos transversales$ npm run start:prod
 
-    
+
 
     PRODUCT_CATEGORY {│   ├── decorators/      # Decorators customizados```
 
@@ -188,19 +184,19 @@ erDiagram````bash
 
     PRODUCT }o--o{ CATEGORY : belongs_to│   ├── interceptors/    # Interceptors para logging y transformación
 
-```
+`````
 
-│   └── pipes/           # Pipes de validación```bash
+│ └── pipes/ # Pipes de validación```bash
 
 ### Índices Estratégicos
 
-└── config/              # Configuración centralizada por entorno# unit tests
+└── config/ # Configuración centralizada por entorno# unit tests
 
-```sql
+````sql
 
 -- Búsqueda de productos por categoría y estado (query más frecuente)```$ npm run test
 
-CREATE INDEX CONCURRENTLY idx_products_category_active 
+CREATE INDEX CONCURRENTLY idx_products_category_active
 
 ON products(category_id, is_active) WHERE is_active = true;
 
@@ -208,7 +204,7 @@ ON products(category_id, is_active) WHERE is_active = true;
 
 -- Búsqueda de texto en nombre y descripción## 📊 Modelo de Datos & Optimizaciones# e2e tests
 
-CREATE INDEX CONCURRENTLY idx_products_text_search 
+CREATE INDEX CONCURRENTLY idx_products_text_search
 
 ON products USING gin(to_tsvector('spanish', name || ' ' || description));$ npm run test:e2e
 
@@ -216,7 +212,7 @@ ON products USING gin(to_tsvector('spanish', name || ' ' || description));$ npm 
 
 -- Ordenamiento por precio para listados### ERD - Entidades Principales
 
-CREATE INDEX CONCURRENTLY idx_products_price_active 
+CREATE INDEX CONCURRENTLY idx_products_price_active
 
 ON products(price, created_at) WHERE is_active = true;# test coverage
 
@@ -224,11 +220,11 @@ ON products(price, created_at) WHERE is_active = true;# test coverage
 
 -- Autenticación rápida```mermaid$ npm run test:cov
 
-CREATE UNIQUE INDEX CONCURRENTLY idx_users_email_active 
+CREATE UNIQUE INDEX CONCURRENTLY idx_users_email_active
 
 ON users(email) WHERE is_active = true;erDiagram```
 
-```
+````
 
     USER {
 
@@ -238,47 +234,37 @@ ON users(email) WHERE is_active = true;erDiagram```
 
 ### 1. Paginación Optimizada
 
-- **Cursor-based pagination** para datasets grandes        string email UK
+- **Cursor-based pagination** para datasets grandes string email UK
 
 - **Eager loading** estratégico para reducir queries N+1
 
-- **Query caching** en Redis para consultas frecuentes        string password_hashWhen you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- **Query caching** en Redis para consultas frecuentes string password_hashWhen you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
-
-
-### 2. Seguridad Enterprise        enum role
+### 2. Seguridad Enterprise enum role
 
 - **JWT con refresh tokens** y rotación automática
 
-- **Rate limiting** por IP y por usuario        timestamp created_atIf you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- **Rate limiting** por IP y por usuario timestamp created_atIf you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
 - **Helmet.js** para headers de seguridad
 
-- **CORS** configurado por entorno        timestamp updated_at
+- **CORS** configurado por entorno timestamp updated_at
 
-
-
-### 3. Observabilidad    }```bash
+### 3. Observabilidad }```bash
 
 - **Structured logging** con Winston
 
-- **Health checks** para base de datos y servicios externos    $ npm install -g @nestjs/mau
+- **Health checks** para base de datos y servicios externos $ npm install -g @nestjs/mau
 
 - **Metrics** de performance con Prometheus
 
-- **Distributed tracing** preparado    PRODUCT {$ mau deploy
+- **Distributed tracing** preparado PRODUCT {$ mau deploy
 
+## 🧪 Estrategia de Testing uuid id PK```
 
+### Cobertura Objetivo: >90% string name
 
-## 🧪 Estrategia de Testing        uuid id PK```
-
-
-
-### Cobertura Objetivo: >90%        string name
-
-
-
-```typescript        text descriptionWith Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+```typescript text descriptionWith Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
 // Ejemplo de test de integración
 
@@ -292,7 +278,7 @@ describe('ProductsController (e2e)', () => {        decimal price
 
       .expect(200);        boolean is_active
 
-      
+
 
     expect(response.body).toMatchObject({        timestamp created_atCheck out a few resources that may come in handy when working with NestJS:
 
@@ -334,21 +320,17 @@ describe('ProductsController (e2e)', () => {        decimal price
 
 ### Pirámide de Testing
 
-- **70% Unit Tests**: Lógica de negocio aislada        boolean is_active
+- **70% Unit Tests**: Lógica de negocio aislada boolean is_active
 
 - **20% Integration Tests**: Controladores + servicios + BD
 
-- **10% E2E Tests**: Flujos críticos completos    }## Support
-
-
+- **10% E2E Tests**: Flujos críticos completos }## Support
 
 ## 🐳 Containerización Profesional
 
+### Multi-stage Dockerfile PRODUCT_CATEGORY {Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
 
-
-### Multi-stage Dockerfile    PRODUCT_CATEGORY {Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-```dockerfile
+`````dockerfile
 
 # Build stage        uuid product_id FK
 
@@ -528,13 +510,11 @@ npm install      },
 
 cp .env.example .env});
 
-```
+`````
 
 # Levantar base de datos (requiere Docker)
 
 docker-compose up -d postgres redis### Pirámide de Testing
-
-
 
 # Ejecutar migraciones y seeds- **70% Unit Tests**: Lógica de negocio aislada
 
@@ -542,13 +522,11 @@ npm run migration:run- **20% Integration Tests**: Controladores + servicios + BD
 
 npm run seed- **10% E2E Tests**: Flujos críticos completos
 
-
-
 # Iniciar en modo desarrollo## 🐳 Containerización Profesional
 
 npm run start:dev
 
-```### Multi-stage Dockerfile
+````### Multi-stage Dockerfile
 
 
 
@@ -578,7 +556,7 @@ WORKDIR /app
 USER nestjs
 EXPOSE 3000
 CMD ["npm", "run", "start:prod"]
-```
+````
 
 ### Docker Compose para Desarrollo
 
