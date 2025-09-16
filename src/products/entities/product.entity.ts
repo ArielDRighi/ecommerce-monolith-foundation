@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
 import { User } from '../../auth/entities/user.entity';
+import { Category } from './category.entity';
 
 @Entity('products')
 @Index('IDX_products_name_search', ['name'])
@@ -72,7 +73,7 @@ export class Product extends BaseEntity {
   @Column({ name: 'created_by' })
   createdById: string;
 
-  @ManyToMany('Category', 'products', {
+  @ManyToMany(() => Category, 'products', {
     cascade: true,
   })
   @JoinTable({
@@ -80,7 +81,7 @@ export class Product extends BaseEntity {
     joinColumn: { name: 'product_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'category_id', referencedColumnName: 'id' },
   })
-  categories: any[];
+  categories: Category[];
 
   // Virtual properties
   get isInStock(): boolean {

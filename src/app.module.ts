@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth';
+import { ProductsModule } from './products';
 import databaseConfig from './config/database.config';
 import appConfig from './config/app.config';
 import jwtConfig from './config/jwt.config';
@@ -32,6 +33,7 @@ import jwtConfig from './config/jwt.config';
 
     // Feature modules
     AuthModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
