@@ -21,6 +21,7 @@ import {
   UpdateCategoryDto,
   CategoryResponseDto,
 } from './dto';
+import { CreatedByUserDto } from './dto/product-response.dto';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -211,6 +212,81 @@ export class ProductsService {
   // PUBLIC SEARCH METHODS
   // ==============================
 
+  /**
+   * Public search for products (without sensitive user data)
+   */
+  async searchProductsPublic(
+    searchDto: ProductSearchDto,
+  ): Promise<PaginatedResult<ProductResponseDto>> {
+    try {
+      const queryBuilder = this.productRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.categories', 'category')
+        // No incluir información del usuario creador en búsquedas públicas
+        .where('product.deletedAt IS NULL')
+        .andWhere('product.isActive = true');
+
+      // Apply filters with optimization hints
+      this.applySearchFilters(queryBuilder, searchDto);
+
+      // Apply sorting with index-aware logic
+      this.applySorting(queryBuilder, searchDto);
+
+      // Optimization: Use COUNT query with same filters but without joins for better performance
+      const countQueryBuilder = this.productRepository
+        .createQueryBuilder('product')
+        .where('product.deletedAt IS NULL')
+        .andWhere('product.isActive = true');
+
+      // Apply the same filters for counting (without relations)
+      this.applySearchFiltersForCount(countQueryBuilder, searchDto);
+
+      // Get total count using optimized query
+      const total = await countQueryBuilder.getCount();
+
+      // Apply pagination
+      const page = searchDto.page || 1;
+      const limit = Math.min(searchDto.limit || 20, 100); // Cap at 100 for performance
+      const skip = (page - 1) * limit;
+
+      queryBuilder.skip(skip).take(limit);
+
+      // Execute query
+      const products = await queryBuilder.getMany();
+
+      // Transform to DTOs with sanitized data
+      const productDtos = products.map((product) => {
+        const dto = plainToClass(ProductResponseDto, product, {
+          excludeExtraneousValues: true,
+        });
+        // Asegurar que no hay información del usuario
+        dto.createdBy = new CreatedByUserDto();
+        return dto;
+      });
+
+      return {
+        data: productDtos,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      console.error('Error in searchProductsPublic', {
+        error: errorMessage,
+        stack: errorStack,
+        searchDto,
+      });
+      throw new Error('Failed to search products: ' + errorMessage);
+    }
+  }
+
+  /**
+   * Admin/authenticated search for products (with full user data)
+   */
   async searchProducts(
     searchDto: ProductSearchDto,
   ): Promise<PaginatedResult<ProductResponseDto>> {
@@ -696,7 +772,37 @@ export class ProductsService {
   }
 
   /**
-   * Optimized slug-based product lookup
+   * Get product by slug (public access - without sensitive user data)
+   */
+  async getProductBySlugPublic(slug: string): Promise<ProductResponseDto> {
+    const product = await this.productRepository.findOne({
+      where: { slug, deletedAt: IsNull(), isActive: true },
+      relations: ['categories'], // No incluir createdBy
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with slug '${slug}' not found`);
+    }
+
+    // Increment view count (fire and forget, atomic)
+    this.productRepository
+      .increment({ id: product.id }, 'viewCount', 1)
+      .catch(() => {
+        // Silent fail for view count increment
+      });
+
+    const dto = plainToClass(ProductResponseDto, product, {
+      excludeExtraneousValues: true,
+    });
+
+    // Asegurar que no hay información del usuario
+    dto.createdBy = new CreatedByUserDto();
+
+    return dto;
+  }
+
+  /**
+   * Optimized slug-based product lookup (admin/authenticated access - with full user data)
    * Leverages unique idx_products_slug_unique index
    */
   async getProductBySlug(slug: string): Promise<ProductResponseDto> {

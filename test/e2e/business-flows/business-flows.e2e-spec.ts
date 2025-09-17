@@ -64,12 +64,6 @@ describe('Business Flows E2E', () => {
         .post('/api/v1/auth/login')
         .send(adminCredentials);
 
-      if (loginResponse.status !== 200) {
-        console.log('Login failed with status:', loginResponse.status);
-        console.log('Response body:', loginResponse.body);
-        console.log('Response text:', loginResponse.text);
-      }
-
       expect(loginResponse.status).toBe(200);
       expect(loginResponse.body.data).toHaveProperty('access_token');
       expect(loginResponse.body.data).toHaveProperty('user');
@@ -130,9 +124,6 @@ describe('Business Flows E2E', () => {
       );
       createdProduct = productResponse.body.data;
 
-      console.log('Created Product ID:', createdProduct.id);
-      console.log('Product creation successful, proceeding to update...');
-
       // 5. UPDATE PRODUCT (Admin Only)
       const updateData = {
         name: 'iPhone 15 Pro Max',
@@ -140,18 +131,10 @@ describe('Business Flows E2E', () => {
         stock: 25,
       };
 
-      console.log(
-        'Attempting to update product at URL:',
-        `/api/v1/products/${createdProduct.id}`,
-      );
-
       const updateResponse = await request(app.getHttpServer())
         .patch(`/api/v1/products/${createdProduct.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send(updateData);
-
-      console.log('Update response status:', updateResponse.status);
-      console.log('Update response body:', updateResponse.body);
 
       expect(updateResponse.status).toBe(200);
 
@@ -207,11 +190,6 @@ describe('Business Flows E2E', () => {
           limit: 10,
         })
         .expect(200);
-
-      console.log(
-        'Search response structure:',
-        JSON.stringify(searchResponse.body, null, 2),
-      );
 
       expect(searchResponse.body.data).toBeDefined();
       // Based on PaginatedResult interface, expect direct fields
@@ -390,7 +368,7 @@ describe('Business Flows E2E', () => {
           name: `Performance Test Product ${i}`,
           slug: `performance-test-product-${i}-${timestamp}`,
           description: `Description for product ${i}`,
-          price: Math.random() * 1000 + 100, // Random price between 100-1100
+          price: parseFloat((Math.random() * 1000 + 100).toFixed(2)), // Random price between 100-1100 with max 2 decimals
           stock: Math.floor(Math.random() * 100) + 1,
           categoryIds: [testCategory.id],
         };
@@ -401,15 +379,6 @@ describe('Business Flows E2E', () => {
           .send(productData);
 
         if (productResponse.status !== 201) {
-          console.log(
-            `Product creation failed for ${i}:`,
-            productResponse.status,
-            JSON.stringify(productResponse.body, null, 2),
-          );
-          console.log(
-            'Product data sent:',
-            JSON.stringify(productData, null, 2),
-          );
           // Continue with loop instead of failing immediately
           continue;
         }
