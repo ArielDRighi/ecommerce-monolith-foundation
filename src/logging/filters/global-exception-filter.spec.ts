@@ -118,4 +118,178 @@ describe('GlobalExceptionFilter', () => {
 
     expect(mockLogger.error).toHaveBeenCalled();
   });
+
+  it('should handle server errors (status >= 500) with error logging', () => {
+    const exception = new HttpException(
+      'Server error',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+
+    filter.catch(exception, mockArgumentsHost as ArgumentsHost);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Server Error:'),
+      expect.objectContaining({
+        error: expect.objectContaining({
+          name: 'HttpException',
+          stack: expect.any(String),
+        }),
+      }),
+    );
+  });
+
+  it('should handle client errors (status < 500) with warning logging', () => {
+    const exception = new HttpException('Client error', HttpStatus.BAD_REQUEST);
+
+    filter.catch(exception, mockArgumentsHost as ArgumentsHost);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Client Error:'),
+      expect.objectContaining({
+        error: expect.objectContaining({
+          code: 'HttpException',
+          message: 'Client error',
+        }),
+      }),
+    );
+  });
+
+  it('should handle HttpException with object response', () => {
+    const responseObj = {
+      message: 'Validation failed',
+      errors: ['field required'],
+    };
+    const exception = new HttpException(responseObj, HttpStatus.BAD_REQUEST);
+
+    filter.catch(exception, mockArgumentsHost as ArgumentsHost);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          details: expect.objectContaining({
+            message: 'Validation failed',
+            errors: expect.objectContaining({
+              '0': 'field required',
+            }),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it('should handle HttpException with string response', () => {
+    const exception = new HttpException('Simple error', HttpStatus.BAD_REQUEST);
+
+    filter.catch(exception, mockArgumentsHost as ArgumentsHost);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          details: { error: 'Simple error' },
+        }),
+      }),
+    );
+  });
+
+  it('should handle Error instance with name and stack', () => {
+    const error = new Error('Custom error');
+    error.name = 'CustomError';
+
+    filter.catch(error, mockArgumentsHost as ArgumentsHost);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Server Error:'),
+      expect.objectContaining({
+        error: expect.objectContaining({
+          name: 'CustomError',
+          stack: expect.any(String),
+        }),
+      }),
+    );
+  });
+
+  it('should handle unknown exception type', () => {
+    const unknownException = { weird: 'object' };
+
+    filter.catch(unknownException, mockArgumentsHost as ArgumentsHost);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Server Error:'),
+      expect.objectContaining({
+        error: expect.objectContaining({
+          code: 'UnknownError',
+          message: 'An unexpected error occurred',
+        }),
+      }),
+    );
+  });
+
+  it('should sanitize sensitive data in request body', () => {
+    mockRequest.body = {
+      username: 'test',
+      password: 'secret123',
+      creditCard: '1234-5678-9012-3456',
+    };
+
+    const exception = new HttpException('Test error', HttpStatus.BAD_REQUEST);
+    filter.catch(exception, mockArgumentsHost as ArgumentsHost);
+
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        context: expect.objectContaining({
+          body: expect.objectContaining({
+            username: 'test',
+            password: '[REDACTED]',
+            creditCard: '[REDACTED]',
+          }),
+        }),
+      }),
+    );
+  });
+
+  it('should hide server error details in public message', () => {
+    const exception = new HttpException(
+      'Internal database error',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+
+    filter.catch(exception, mockArgumentsHost as ArgumentsHost);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          message: 'Internal server error. Please try again later.',
+        }),
+      }),
+    );
+  });
+
+  it('should preserve client error messages in public response', () => {
+    const exception = new HttpException(
+      'Field validation failed',
+      HttpStatus.BAD_REQUEST,
+    );
+
+    filter.catch(exception, mockArgumentsHost as ArgumentsHost);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          message: 'Field validation failed',
+        }),
+      }),
+    );
+  });
 });

@@ -83,4 +83,32 @@ describe('Category Entity', () => {
     category.imageUrl = imageUrl;
     expect(category.imageUrl).toBe(imageUrl);
   });
+
+  describe('productCount getter', () => {
+    it('should return correct count when products array has items', () => {
+      const product1 = new Product();
+      const product2 = new Product();
+      const product3 = new Product();
+
+      category.products = [product1, product2, product3];
+
+      expect(category.productCount).toBe(3);
+    });
+
+    it('should return 0 when products array is empty', () => {
+      category.products = [];
+      expect(category.productCount).toBe(0);
+    });
+
+    it('should return 0 when products is not set', () => {
+      const newCategory = new Category();
+      expect(newCategory.productCount).toBe(0);
+    });
+
+    it('should handle single product correctly', () => {
+      const product = new Product();
+      category.products = [product];
+      expect(category.productCount).toBe(1);
+    });
+  });
 });

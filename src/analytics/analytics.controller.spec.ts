@@ -203,6 +203,18 @@ describe('AnalyticsController', () => {
       expect(result.performanceRating).toBeDefined();
       expect(mockProductsService.getRecentProducts).toHaveBeenCalledWith(20);
     });
+
+    it('should handle recent products errors', async () => {
+      mockProductsService.getRecentProducts.mockRejectedValue(
+        new Error('Recent fetch failed'),
+      );
+
+      const result = await controller.benchmarkRecent();
+
+      expect(result.operation).toContain('failed');
+      expect(result.resultCount).toBe(0);
+      expect(result.performanceRating).toBe('Needs Improvement');
+    });
   });
 
   describe('benchmarkCategory', () => {
