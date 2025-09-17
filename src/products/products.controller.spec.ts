@@ -68,6 +68,7 @@ describe('ProductsController', () => {
       getRecentProducts: jest.fn(),
       getProductsByCategory: jest.fn(),
       getProductBySlug: jest.fn(),
+      getProductBySlugPublic: jest.fn(),
       searchProducts: jest.fn(),
       getProductById: jest.fn(),
       createCategory: jest.fn(),
@@ -176,11 +177,13 @@ describe('ProductsController', () => {
 
     describe('getProductBySlug', () => {
       it('should get product by slug', async () => {
-        service.getProductBySlug.mockResolvedValue(mockProductResponse);
+        service.getProductBySlugPublic.mockResolvedValue(mockProductResponse);
 
         const result = await controller.getProductBySlug('test-product');
 
-        expect(service.getProductBySlug).toHaveBeenCalledWith('test-product');
+        expect(service.getProductBySlugPublic).toHaveBeenCalledWith(
+          'test-product',
+        );
         expect(result).toBe(mockProductResponse);
       });
     });
