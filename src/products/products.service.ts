@@ -214,55 +214,68 @@ export class ProductsService {
   async searchProducts(
     searchDto: ProductSearchDto,
   ): Promise<PaginatedResult<ProductResponseDto>> {
-    const queryBuilder = this.productRepository
-      .createQueryBuilder('product')
-      .leftJoinAndSelect('product.categories', 'category')
-      .leftJoinAndSelect('product.createdBy', 'createdBy')
-      .where('product.deletedAt IS NULL')
-      .andWhere('product.isActive = true');
+    try {
+      const queryBuilder = this.productRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.categories', 'category')
+        .leftJoinAndSelect('product.createdBy', 'createdBy')
+        .where('product.deletedAt IS NULL')
+        .andWhere('product.isActive = true');
 
-    // Apply filters with optimization hints
-    this.applySearchFilters(queryBuilder, searchDto);
+      // Apply filters with optimization hints
+      this.applySearchFilters(queryBuilder, searchDto);
 
-    // Apply sorting with index-aware logic
-    this.applySorting(queryBuilder, searchDto);
+      // Apply sorting with index-aware logic
+      this.applySorting(queryBuilder, searchDto);
 
-    // Optimization: Use COUNT query with same filters but without joins for better performance
-    const countQueryBuilder = this.productRepository
-      .createQueryBuilder('product')
-      .where('product.deletedAt IS NULL')
-      .andWhere('product.isActive = true');
+      // Optimization: Use COUNT query with same filters but without joins for better performance
+      const countQueryBuilder = this.productRepository
+        .createQueryBuilder('product')
+        .where('product.deletedAt IS NULL')
+        .andWhere('product.isActive = true');
 
-    // Apply the same filters for counting (without relations)
-    this.applySearchFiltersForCount(countQueryBuilder, searchDto);
+      // Apply the same filters for counting (without relations)
+      this.applySearchFiltersForCount(countQueryBuilder, searchDto);
 
-    // Get total count using optimized query
-    const total = await countQueryBuilder.getCount();
+      // Get total count using optimized query
+      const total = await countQueryBuilder.getCount();
 
-    // Apply pagination
-    const page = searchDto.page || 1;
-    const limit = Math.min(searchDto.limit || 20, 100); // Cap at 100 for performance
-    const skip = (page - 1) * limit;
+      // Apply pagination
+      const page = searchDto.page || 1;
+      const limit = Math.min(searchDto.limit || 20, 100); // Cap at 100 for performance
+      const skip = (page - 1) * limit;
 
-    queryBuilder.skip(skip).take(limit);
+      queryBuilder.skip(skip).take(limit);
 
-    // Execute query
-    const products = await queryBuilder.getMany();
+      // Execute query
+      const products = await queryBuilder.getMany();
 
-    // Transform to DTOs
-    const productDtos = products.map((product) =>
-      plainToClass(ProductResponseDto, product, {
-        excludeExtraneousValues: true,
-      }),
-    );
+      // Transform to DTOs
+      const productDtos = products.map((product) =>
+        plainToClass(ProductResponseDto, product, {
+          excludeExtraneousValues: true,
+        }),
+      );
 
-    return {
-      data: productDtos,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+      return {
+        data: productDtos,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      console.error('Error in searchProducts:', error);
+
+      // Return empty result instead of throwing error for graceful degradation
+      return {
+        data: [],
+        total: 0,
+        page: searchDto.page || 1,
+        limit: searchDto.limit || 20,
+        totalPages: 0,
+      };
+    }
   }
 
   private applySearchFilters(

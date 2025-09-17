@@ -148,5 +148,46 @@ describe('Product Entity', () => {
       product.rating = 0;
       expect(product.averageRating).toBe(0);
     });
+
+    it('should handle null rating', () => {
+      product.rating = undefined;
+      expect(product.averageRating).toBe(0);
+    });
+
+    it('should handle decimal ratings', () => {
+      product.rating = 3.7;
+      expect(product.averageRating).toBe(3.7);
+    });
+  });
+
+  describe('Additional virtual getter tests', () => {
+    it('should handle stock boundary conditions for all getters', () => {
+      // Edge case: exactly at low stock boundary
+      product.stock = 10;
+      expect(product.isInStock).toBe(true);
+      expect(product.isLowStock).toBe(true);
+
+      // Edge case: just above low stock
+      product.stock = 11;
+      expect(product.isInStock).toBe(true);
+      expect(product.isLowStock).toBe(false);
+
+      // Edge case: negative stock (should not happen but test for robustness)
+      product.stock = -5;
+      expect(product.isInStock).toBe(false);
+      expect(product.isLowStock).toBe(false);
+    });
+
+    it('should validate getter consistency', () => {
+      // When stock is 0, isInStock should be false and isLowStock should be false
+      product.stock = 0;
+      expect(product.isInStock).toBe(false);
+      expect(product.isLowStock).toBe(false);
+
+      // When stock is 1, isInStock should be true and isLowStock should be true
+      product.stock = 1;
+      expect(product.isInStock).toBe(true);
+      expect(product.isLowStock).toBe(true);
+    });
   });
 });

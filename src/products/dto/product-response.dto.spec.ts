@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { plainToClass } from 'class-transformer';
 import {
   ProductResponseDto,

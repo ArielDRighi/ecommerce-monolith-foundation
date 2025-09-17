@@ -45,7 +45,8 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Register a new user',
-    description: 'Create a new user account with email and password',
+    description:
+      'Create a new user account with email and password. Only admin users can create admin accounts.',
   })
   @ApiBody({ type: RegisterDto })
   @ApiResponse({
@@ -59,10 +60,14 @@ export class AuthController {
   @ApiConflictResponse({
     description: 'User with this email already exists',
   })
+  @ApiUnauthorizedResponse({
+    description: 'Only admin users can create admin accounts',
+  })
   async register(
     @Body(ValidationPipe) registerDto: RegisterDto,
+    @CurrentUser() requestingUser?: User,
   ): Promise<AuthResponseDto> {
-    return this.authService.register(registerDto);
+    return this.authService.register(registerDto, requestingUser);
   }
 
   @Post('login')

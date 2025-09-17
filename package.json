@@ -19,7 +19,12 @@
     "test:cov:html": "jest --coverage --coverageReporters=html",
     "test:cov:text": "jest --coverage --coverageReporters=text-summary",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e": "jest --config ./test/config/jest-e2e.json",
+    "test:e2e:api": "jest --config ./test/config/jest-e2e.json --testPathPatterns=api",
+    "test:e2e:contracts": "jest --config ./test/config/jest-e2e.json --testPathPatterns=contracts",
+    "test:e2e:integration": "jest --config ./test/config/jest-e2e.json --testPathPatterns=integration",
+    "test:e2e:business": "jest --config ./test/config/jest-e2e.json --testPathPatterns=business-flows",
+    "test:e2e:smoke": "jest --config ./test/config/jest-e2e.json --testPathPatterns=smoke",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "migration:generate": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d src/config/typeorm.config.ts",
     "migration:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d src/config/typeorm.config.ts",
@@ -95,6 +100,9 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(uuid)/)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s",
       "!**/*.spec.ts",
@@ -122,7 +130,7 @@
     },
     "testEnvironment": "node",
     "setupFilesAfterEnv": [
-      "<rootDir>/../test/setup.ts"
+      "<rootDir>/../test/config/setup.ts"
     ]
   }
 }

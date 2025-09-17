@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { of } from 'rxjs';
@@ -179,7 +181,7 @@ describe('TransformResponseInterceptor', () => {
       const result = createErrorResponse(error, meta);
 
       expect(result.success).toBe(false);
-      expect(result.error.details).toBeUndefined();
+      expect(result.error?.details).toBeUndefined();
     });
   });
 });

@@ -1,10 +1,13 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
 import {
   RefreshTokenDto,
   AuthResponseDto,
@@ -17,6 +20,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ExecutionContext } from '@nestjs/common';
+
+interface RequestWithUser {
+  user: User;
+}
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -34,6 +41,8 @@ describe('AuthController', () => {
     fullName: 'Test User',
     isAdmin: false,
     isCustomer: true,
+    isDeleted: false,
+    isRecent: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     products: [],
@@ -119,7 +128,7 @@ describe('AuthController', () => {
 
       const result = await controller.register(registerDto);
 
-      expect(authService.register).toHaveBeenCalledWith(registerDto);
+      expect(authService.register).toHaveBeenCalledWith(registerDto, undefined);
       expect(result).toEqual(mockAuthResponse);
     });
 
@@ -145,17 +154,12 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    const loginDto: LoginDto = {
-      email: 'test@example.com',
-      password: 'Password123!',
-    };
-
     it('should login successfully', async () => {
       authService.generateTokensForUser.mockResolvedValue(mockAuthResponse);
       authService.updateLastLogin.mockResolvedValue(undefined);
 
-      const mockRequest = { user: mockUser };
-      const result = await controller.login(mockRequest as any);
+      const mockRequest: RequestWithUser = { user: mockUser };
+      const result = await controller.login(mockRequest);
 
       expect(authService.generateTokensForUser).toHaveBeenCalledWith(mockUser);
       expect(authService.updateLastLogin).toHaveBeenCalledWith(mockUser.id);
@@ -167,8 +171,8 @@ describe('AuthController', () => {
         new UnauthorizedException('Invalid credentials'),
       );
 
-      const mockRequest = { user: mockUser };
-      await expect(controller.login(mockRequest as any)).rejects.toThrow(
+      const mockRequest: RequestWithUser = { user: mockUser };
+      await expect(controller.login(mockRequest)).rejects.toThrow(
         UnauthorizedException,
       );
     });

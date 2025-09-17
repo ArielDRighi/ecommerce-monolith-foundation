@@ -3,6 +3,11 @@ import { BaseEntity } from './base.entity';
 // Create a concrete implementation for testing
 class TestEntity extends BaseEntity {
   name: string;
+
+  // Add a method to test function coverage
+  getEntityInfo(): string {
+    return `Entity ${this.id} created at ${this.createdAt?.toISOString() || 'unknown'}`;
+  }
 }
 
 describe('BaseEntity', () => {
@@ -122,6 +127,76 @@ describe('BaseEntity', () => {
       expect(entity).toHaveProperty('updatedAt');
       expect(entity).toHaveProperty('deletedAt');
       expect(entity).toHaveProperty('isActive');
+    });
+  });
+
+  describe('extended functionality', () => {
+    it('should provide entity info through getEntityInfo method', () => {
+      entity.id = 'test-id';
+      entity.createdAt = new Date('2023-01-01T10:00:00Z');
+
+      const info = entity.getEntityInfo();
+      expect(info).toContain('test-id');
+      expect(info).toContain('2023-01-01T10:00:00.000Z');
+    });
+
+    it('should check if entity is deleted through isDeleted getter', () => {
+      // Entity not deleted
+      entity.deletedAt = undefined;
+      expect(entity.isDeleted).toBe(false);
+
+      // Entity deleted
+      entity.deletedAt = new Date();
+      expect(entity.isDeleted).toBe(true);
+
+      // Reset to undefined for null test
+      entity.deletedAt = undefined;
+      expect(entity.isDeleted).toBe(false);
+    });
+
+    it('should check if entity is recent through isRecent getter', () => {
+      // No createdAt (default value)
+      expect(entity.isRecent).toBe(false);
+
+      // Recent entity (created 1 hour ago)
+      const oneHourAgo = new Date();
+      oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+      entity.createdAt = oneHourAgo;
+      expect(entity.isRecent).toBe(true);
+
+      // Old entity (created 2 days ago)
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      entity.createdAt = twoDaysAgo;
+      expect(entity.isRecent).toBe(false);
+    });
+
+    it('should handle edge cases for getters and methods', () => {
+      // getEntityInfo with default state
+      entity.id = 'test-id';
+      expect(() => entity.getEntityInfo()).not.toThrow();
+
+      // Test with a very old date for isRecent edge case
+      const veryOldDate = new Date('2020-01-01');
+      entity.createdAt = veryOldDate;
+      expect(entity.isRecent).toBe(false);
+    });
+
+    it('should handle null/undefined cases for getters', () => {
+      // Test isDeleted with undefined (should be false)
+      entity.deletedAt = undefined;
+      expect(entity.isDeleted).toBe(false);
+
+      // Test isRecent with uninitialized createdAt
+      const freshEntity = new TestEntity();
+      expect(freshEntity.isRecent).toBe(false);
+
+      // Test exact boundary for isRecent (exactly 24 hours ago)
+      const exactlyOneDayAgo = new Date();
+      exactlyOneDayAgo.setDate(exactlyOneDayAgo.getDate() - 1);
+      exactlyOneDayAgo.setHours(exactlyOneDayAgo.getHours() - 1); // Just past 24 hours
+      entity.createdAt = exactlyOneDayAgo;
+      expect(entity.isRecent).toBe(false);
     });
   });
 });

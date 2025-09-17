@@ -27,8 +27,11 @@ export class AuthService {
   /**
    * Register a new user
    */
-  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    const { email, password, firstName, lastName, phone } = registerDto;
+  async register(
+    registerDto: RegisterDto,
+    requestingUser?: User,
+  ): Promise<AuthResponseDto> {
+    const { email, password, firstName, lastName, phone, role } = registerDto;
 
     // Check if user already exists
     const existingUser = await this.userRepository.findOne({
@@ -37,6 +40,21 @@ export class AuthService {
 
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
+    }
+
+    // Determine the role for the new user
+    let userRole = UserRole.CUSTOMER; // Default role
+
+    if (role) {
+      // If role is specified, check if requesting user has permission
+      if (role === UserRole.ADMIN) {
+        if (!requestingUser || !requestingUser.isAdmin) {
+          throw new UnauthorizedException(
+            'Only admin users can create admin accounts',
+          );
+        }
+      }
+      userRole = role;
     }
 
     // Hash password
@@ -54,7 +72,7 @@ export class AuthService {
       firstName,
       lastName,
       phone,
-      role: UserRole.CUSTOMER, // Default role
+      role: userRole, // Use determined role
       isActive: true,
     });
 
@@ -331,6 +349,67 @@ export class AuthService {
    */
   async getUserCount(): Promise<number> {
     return await this.userRepository.count();
+  }
+
+  /**
+   * Create the first admin user (for testing or bootstrapping)
+   * This method bypasses the role validation
+   */
+  async createFirstAdmin(registerDto: RegisterDto): Promise<AuthResponseDto> {
+    const { email, password, firstName, lastName, phone } = registerDto;
+
+    // Check if user already exists
+    const existingUser = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    // Hash password
+    const saltRounds = parseInt(
+      this.configService.get<string>('BCRYPT_SALT_ROUNDS', '12'),
+      10,
+    );
+    const salt = await bcrypt.genSalt(saltRounds);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create admin user
+    const user = this.userRepository.create({
+      email,
+      passwordHash: hashedPassword,
+      firstName,
+      lastName,
+      phone,
+      role: UserRole.ADMIN,
+      isActive: true,
+    });
+
+    try {
+      await this.userRepository.save(user);
+    } catch (error: unknown) {
+      // Handle potential database constraints
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        typeof (error as { code?: unknown }).code === 'string' &&
+        (error as { code: string }).code === '23505'
+      ) {
+        // PostgreSQL unique violation
+        throw new ConflictException('User with this email already exists');
+      }
+      throw error;
+    }
+
+    // Generate tokens
+    const tokens = await this.generateTokens(user);
+
+    return {
+      ...tokens,
+      user: this.transformUserToProfile(user),
+    };
   }
 
   /**

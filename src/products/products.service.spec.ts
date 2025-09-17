@@ -1,6 +1,11 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, IsNull, UpdateResult } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import {
   NotFoundException,
   ConflictException,
@@ -17,6 +22,7 @@ import type {
   ProductSearchDto,
   CreateCategoryDto,
 } from './dto';
+import { ProductSortBy, SortOrder } from './dto';
 
 describe('ProductsService', () => {
   let service: ProductsService;
@@ -38,6 +44,8 @@ describe('ProductsService', () => {
     slug: 'electronics',
     description: 'Electronic devices',
     isActive: true,
+    isDeleted: false,
+    isRecent: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     products: [],
@@ -179,7 +187,9 @@ describe('ProductsService', () => {
       };
 
       jest.spyOn(productRepository, 'findOne').mockResolvedValue(mockProduct);
-      jest.spyOn(productRepository, 'save').mockResolvedValue(updatedProduct);
+      jest
+        .spyOn(productRepository, 'save')
+        .mockResolvedValue(updatedProduct as any);
 
       const result = await service.updateProduct(
         'prod-id-1',
@@ -811,6 +821,143 @@ describe('ProductsService', () => {
       expect(result.description).toBe('Updated description');
     });
 
+    it('should update only name when only name is provided', async () => {
+      const mockCategory = {
+        id: 'cat-id-1',
+        name: 'Electronics',
+        slug: 'electronics',
+        description: 'Electronic products',
+        isActive: true,
+      } as unknown as Category;
+
+      jest.spyOn(categoryRepository, 'findOne').mockResolvedValue(mockCategory);
+      jest.spyOn(categoryRepository, 'save').mockResolvedValue({
+        ...mockCategory,
+        name: 'Updated Name',
+      } as unknown as Category);
+
+      const result = await service.updateCategory('cat-id-1', {
+        name: 'Updated Name',
+      });
+
+      expect(result).toBeDefined();
+      expect(categoryRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Updated Name',
+        }),
+      );
+    });
+
+    it('should update only slug when only slug is provided', async () => {
+      const mockCategory = {
+        id: 'cat-id-1',
+        name: 'Electronics',
+        slug: 'electronics',
+        description: 'Electronic products',
+        isActive: true,
+      } as unknown as Category;
+
+      jest
+        .spyOn(categoryRepository, 'findOne')
+        .mockResolvedValueOnce(mockCategory) // First call to find category
+        .mockResolvedValueOnce(null); // Second call to check slug conflict
+      jest.spyOn(categoryRepository, 'save').mockResolvedValue({
+        ...mockCategory,
+        slug: 'new-slug',
+      } as unknown as Category);
+
+      const result = await service.updateCategory('cat-id-1', {
+        slug: 'new-slug',
+      });
+
+      expect(result).toBeDefined();
+      expect(categoryRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slug: 'new-slug',
+        }),
+      );
+    });
+
+    it('should update only description when only description is provided', async () => {
+      const mockCategory = {
+        id: 'cat-id-1',
+        name: 'Electronics',
+        slug: 'electronics',
+        description: 'Electronic products',
+        isActive: true,
+      } as unknown as Category;
+
+      jest.spyOn(categoryRepository, 'findOne').mockResolvedValue(mockCategory);
+      jest.spyOn(categoryRepository, 'save').mockResolvedValue({
+        ...mockCategory,
+        description: 'Updated description',
+      } as unknown as Category);
+
+      const result = await service.updateCategory('cat-id-1', {
+        description: 'Updated description',
+      });
+
+      expect(result).toBeDefined();
+      expect(categoryRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: 'Updated description',
+        }),
+      );
+    });
+
+    it('should update only isActive when only isActive is provided', async () => {
+      const mockCategory = {
+        id: 'cat-id-1',
+        name: 'Electronics',
+        slug: 'electronics',
+        description: 'Electronic products',
+        isActive: true,
+      } as unknown as Category;
+
+      jest.spyOn(categoryRepository, 'findOne').mockResolvedValue(mockCategory);
+      jest.spyOn(categoryRepository, 'save').mockResolvedValue({
+        ...mockCategory,
+        isActive: false,
+      } as unknown as Category);
+
+      const result = await service.updateCategory('cat-id-1', {
+        isActive: false,
+      });
+
+      expect(result).toBeDefined();
+      expect(categoryRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isActive: false,
+        }),
+      );
+    });
+
+    it('should handle undefined values in update dto', async () => {
+      const mockCategory = {
+        id: 'cat-id-1',
+        name: 'Electronics',
+        slug: 'electronics',
+        description: 'Electronic products',
+        isActive: true,
+      } as unknown as Category;
+
+      const updateDto = {
+        name: undefined,
+        slug: undefined,
+        description: undefined,
+        isActive: undefined,
+      };
+
+      jest.spyOn(categoryRepository, 'findOne').mockResolvedValue(mockCategory);
+      jest.spyOn(categoryRepository, 'save').mockResolvedValue(mockCategory);
+
+      const result = await service.updateCategory('cat-id-1', updateDto);
+
+      expect(result).toBeDefined();
+      // Verify that undefined values don't overwrite existing values
+      expect(categoryRepository.save).toHaveBeenCalledWith(mockCategory);
+    });
+
     it('should throw NotFoundException if category not found', async () => {
       jest.spyOn(categoryRepository, 'findOne').mockResolvedValue(null);
 
@@ -882,6 +1029,216 @@ describe('ProductsService', () => {
       await expect(service.deleteCategory('cat-id-1')).rejects.toThrow(
         BadRequestException,
       );
+    });
+  });
+
+  // Additional tests to improve coverage
+  describe('Coverage Enhancement Tests', () => {
+    describe('createProduct edge cases', () => {
+      it('should throw error for invalid category IDs', async () => {
+        const createProductDto: CreateProductDto = {
+          name: 'Test Product',
+          description: 'Test Description',
+          slug: 'test-product',
+          price: 99.99,
+          stock: 10,
+          categoryIds: ['invalid-cat-1', 'invalid-cat-2'],
+        };
+
+        jest.spyOn(categoryRepository, 'find').mockResolvedValue([]);
+
+        await expect(
+          service.createProduct(createProductDto, mockUser),
+        ).rejects.toThrow(BadRequestException);
+
+        expect(categoryRepository.find).toHaveBeenCalledWith({
+          where: {
+            id: expect.any(Object),
+            isActive: true,
+            deletedAt: IsNull(),
+          },
+        });
+      });
+
+      it('should throw error for partially invalid category IDs', async () => {
+        const createProductDto: CreateProductDto = {
+          name: 'Test Product',
+          description: 'Test Description',
+          slug: 'test-product',
+          price: 99.99,
+          stock: 10,
+          categoryIds: ['valid-cat-1', 'invalid-cat-2'],
+        };
+
+        const validCategory = {
+          ...mockCategory,
+          id: 'valid-cat-1',
+          productCount: 0,
+        };
+
+        jest
+          .spyOn(categoryRepository, 'find')
+          .mockResolvedValue([validCategory as any]);
+
+        await expect(
+          service.createProduct(createProductDto, mockUser),
+        ).rejects.toThrow(BadRequestException);
+      });
+    });
+
+    describe('searchProducts sorting variations', () => {
+      beforeEach(() => {
+        const mockQueryBuilder = {
+          leftJoin: jest.fn().mockReturnThis(),
+          leftJoinAndSelect: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          andWhere: jest.fn().mockReturnThis(),
+          orderBy: jest.fn().mockReturnThis(),
+          addOrderBy: jest.fn().mockReturnThis(),
+          skip: jest.fn().mockReturnThis(),
+          take: jest.fn().mockReturnThis(),
+          getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+        };
+
+        jest
+          .spyOn(productRepository, 'createQueryBuilder')
+          .mockReturnValue(mockQueryBuilder as any);
+      });
+
+      it('should sort by RATING DESC with NULLS handling', async () => {
+        const searchDto = {
+          sortBy: ProductSortBy.RATING,
+          sortOrder: SortOrder.DESC,
+        };
+
+        await service.searchProducts(searchDto);
+
+        const queryBuilder = productRepository.createQueryBuilder();
+        expect(queryBuilder.orderBy).toHaveBeenCalledWith(
+          'product.rating',
+          'DESC',
+          'NULLS LAST',
+        );
+      });
+
+      it('should sort by RATING ASC with NULLS handling', async () => {
+        const searchDto = {
+          sortBy: ProductSortBy.RATING,
+          sortOrder: SortOrder.ASC,
+        };
+
+        await service.searchProducts(searchDto);
+
+        const queryBuilder = productRepository.createQueryBuilder();
+        expect(queryBuilder.orderBy).toHaveBeenCalledWith(
+          'product.rating',
+          'ASC',
+          'NULLS FIRST',
+        );
+      });
+
+      it('should sort by POPULARITY', async () => {
+        const searchDto = {
+          sortBy: ProductSortBy.POPULARITY,
+          sortOrder: SortOrder.DESC,
+        };
+
+        await service.searchProducts(searchDto);
+
+        const queryBuilder = productRepository.createQueryBuilder();
+        expect(queryBuilder.orderBy).toHaveBeenCalledWith(
+          'product.orderCount',
+          'DESC',
+        );
+      });
+
+      it('should sort by VIEWS', async () => {
+        const searchDto = {
+          sortBy: ProductSortBy.VIEWS,
+          sortOrder: SortOrder.ASC,
+        };
+
+        await service.searchProducts(searchDto);
+
+        const queryBuilder = productRepository.createQueryBuilder();
+        expect(queryBuilder.orderBy).toHaveBeenCalledWith(
+          'product.viewCount',
+          'ASC',
+        );
+      });
+
+      it('should add secondary sort for non-CREATED_AT sorting', async () => {
+        const searchDto = {
+          sortBy: ProductSortBy.NAME,
+          sortOrder: SortOrder.ASC,
+        };
+
+        await service.searchProducts(searchDto);
+
+        const queryBuilder = productRepository.createQueryBuilder();
+        expect(queryBuilder.addOrderBy).toHaveBeenCalledWith(
+          'product.id',
+          'ASC',
+        );
+      });
+    });
+
+    describe('updateProduct edge cases', () => {
+      it('should handle partial category update correctly', async () => {
+        const updateProductDto: UpdateProductDto = {
+          name: 'Updated Product',
+        };
+
+        const existingProduct = {
+          ...mockProduct,
+          categories: [mockCategory],
+          isInStock: true,
+          isLowStock: false,
+          averageRating: 4.5,
+        };
+
+        jest
+          .spyOn(productRepository, 'findOne')
+          .mockResolvedValue(existingProduct as any);
+        jest.spyOn(productRepository, 'save').mockResolvedValue({
+          ...existingProduct,
+          ...updateProductDto,
+        } as any);
+
+        const result = await service.updateProduct(
+          'prod-id-1',
+          updateProductDto,
+        );
+
+        expect(result).toBeDefined();
+        expect(productRepository.save).toHaveBeenCalled();
+      });
+    });
+
+    describe('category management edge cases', () => {
+      it('should handle category creation with duplicate slug detection', async () => {
+        const createCategoryDto: CreateCategoryDto = {
+          name: 'Test Category',
+          slug: 'test-category',
+          description: 'Test Description',
+          isActive: true,
+        };
+
+        // First call to check existing slug - return null (not found)
+        // Second call is for creating the category
+        jest
+          .spyOn(categoryRepository, 'findOne')
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(mockCategory);
+
+        jest.spyOn(categoryRepository, 'create').mockReturnValue(mockCategory);
+        jest.spyOn(categoryRepository, 'save').mockResolvedValue(mockCategory);
+
+        const result = await service.createCategory(createCategoryDto);
+
+        expect(result).toBeDefined();
+        expect(categoryRepository.save).toHaveBeenCalled();
+      });
     });
   });
 });

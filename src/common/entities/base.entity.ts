@@ -35,4 +35,21 @@ export abstract class BaseEntity {
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
+
+  /**
+   * Virtual getter to check if entity has been soft deleted
+   */
+  get isDeleted(): boolean {
+    return this.deletedAt !== undefined && this.deletedAt !== null;
+  }
+
+  /**
+   * Virtual getter to check if entity was created recently (within last day)
+   */
+  get isRecent(): boolean {
+    if (!this.createdAt) return false;
+    const dayAgo = new Date();
+    dayAgo.setDate(dayAgo.getDate() - 1);
+    return this.createdAt > dayAgo;
+  }
 }

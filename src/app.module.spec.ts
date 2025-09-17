@@ -70,9 +70,12 @@ describe('AppModule', () => {
 
   it('should be a valid NestJS module', () => {
     // Check metadata exists
-    const imports = Reflect.getMetadata('imports', AppModule);
-    const controllers = Reflect.getMetadata('controllers', AppModule);
-    const providers = Reflect.getMetadata('providers', AppModule);
+    const imports = Reflect.getMetadata('imports', AppModule) as unknown[];
+    const controllers = Reflect.getMetadata(
+      'controllers',
+      AppModule,
+    ) as unknown[];
+    const providers = Reflect.getMetadata('providers', AppModule) as unknown[];
 
     expect(imports).toBeDefined();
     expect(controllers).toBeDefined();

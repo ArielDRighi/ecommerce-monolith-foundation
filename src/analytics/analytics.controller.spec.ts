@@ -138,6 +138,96 @@ describe('AnalyticsController', () => {
       });
     });
 
+    it('should use default search term when none provided', async () => {
+      const mockSearchResult = {
+        data: [{ id: 1, title: 'Samsung Phone' }],
+        total: 1,
+        page: 1,
+        totalPages: 1,
+      };
+      mockProductsService.searchProducts.mockResolvedValue(mockSearchResult);
+
+      await controller.benchmarkSearch();
+
+      expect(mockProductsService.searchProducts).toHaveBeenCalledWith({
+        search: 'Samsung',
+        categoryId: undefined,
+        minPrice: 100,
+        maxPrice: 1000,
+        page: 1,
+        limit: 20,
+      });
+    });
+
+    it('should use all provided search parameters', async () => {
+      const mockSearchResult = {
+        data: [{ id: 1, title: 'Product in category' }],
+        total: 1,
+        page: 1,
+        totalPages: 1,
+      };
+      mockProductsService.searchProducts.mockResolvedValue(mockSearchResult);
+
+      await controller.benchmarkSearch('laptop', 'electronics', 500, 2000);
+
+      expect(mockProductsService.searchProducts).toHaveBeenCalledWith({
+        search: 'laptop',
+        categoryId: 'electronics',
+        minPrice: 500,
+        maxPrice: 2000,
+        page: 1,
+        limit: 20,
+      });
+    });
+
+    it('should return Excellent performance rating for fast execution', async () => {
+      const mockSearchResult = { data: [], total: 0, page: 1, totalPages: 1 };
+      mockProductsService.searchProducts.mockResolvedValue(mockSearchResult);
+
+      // Mock performance.now to simulate fast execution (< 50ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1025); // 25ms difference
+
+      const result = await controller.benchmarkSearch('test');
+
+      expect(result.performanceRating).toBe('Excellent');
+      expect(result.executionTime).toBe(25);
+    });
+
+    it('should return Good performance rating for medium execution', async () => {
+      const mockSearchResult = { data: [], total: 0, page: 1, totalPages: 1 };
+      mockProductsService.searchProducts.mockResolvedValue(mockSearchResult);
+
+      // Mock performance.now to simulate medium execution (75ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1075); // 75ms difference
+
+      const result = await controller.benchmarkSearch('test');
+
+      expect(result.performanceRating).toBe('Good');
+      expect(result.executionTime).toBe(75);
+    });
+
+    it('should return Needs Improvement rating for slow execution', async () => {
+      const mockSearchResult = { data: [], total: 0, page: 1, totalPages: 1 };
+      mockProductsService.searchProducts.mockResolvedValue(mockSearchResult);
+
+      // Mock performance.now to simulate slow execution (150ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1150); // 150ms difference
+
+      const result = await controller.benchmarkSearch('test');
+
+      expect(result.performanceRating).toBe('Needs Improvement');
+      expect(result.executionTime).toBe(150);
+    });
+
     it('should handle search errors gracefully', async () => {
       mockProductsService.searchProducts.mockRejectedValue(
         new Error('Search failed'),
@@ -148,6 +238,15 @@ describe('AnalyticsController', () => {
       expect(result).toBeDefined();
       expect(result.operation).toContain('failed');
       expect(result.resultCount).toBe(0);
+      expect(result.performanceRating).toBe('Needs Improvement');
+    });
+
+    it('should handle non-Error exceptions', async () => {
+      mockProductsService.searchProducts.mockRejectedValue('String error');
+
+      const result = await controller.benchmarkSearch('test');
+
+      expect(result.operation).toContain('failed');
       expect(result.performanceRating).toBe('Needs Improvement');
     });
   });
@@ -172,6 +271,60 @@ describe('AnalyticsController', () => {
       expect(mockProductsService.getPopularProducts).toHaveBeenCalledWith(20);
     });
 
+    it('should return Excellent rating for very fast execution', async () => {
+      const mockPopularProducts = [{ id: 1, title: 'Popular Product' }];
+      mockProductsService.getPopularProducts.mockResolvedValue(
+        mockPopularProducts,
+      );
+
+      // Mock performance.now to simulate very fast execution (< 30ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1020); // 20ms difference
+
+      const result = await controller.benchmarkPopular();
+
+      expect(result.performanceRating).toBe('Excellent');
+      expect(result.executionTime).toBe(20);
+    });
+
+    it('should return Good rating for medium execution', async () => {
+      const mockPopularProducts = [{ id: 1, title: 'Popular Product' }];
+      mockProductsService.getPopularProducts.mockResolvedValue(
+        mockPopularProducts,
+      );
+
+      // Mock performance.now to simulate medium execution (45ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1045); // 45ms difference
+
+      const result = await controller.benchmarkPopular();
+
+      expect(result.performanceRating).toBe('Good');
+      expect(result.executionTime).toBe(45);
+    });
+
+    it('should return Needs Improvement rating for slow execution', async () => {
+      const mockPopularProducts = [{ id: 1, title: 'Popular Product' }];
+      mockProductsService.getPopularProducts.mockResolvedValue(
+        mockPopularProducts,
+      );
+
+      // Mock performance.now to simulate slow execution (80ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1080); // 80ms difference
+
+      const result = await controller.benchmarkPopular();
+
+      expect(result.performanceRating).toBe('Needs Improvement');
+      expect(result.executionTime).toBe(80);
+    });
+
     it('should handle popular products errors', async () => {
       mockProductsService.getPopularProducts.mockRejectedValue(
         new Error('Popular fetch failed'),
@@ -181,6 +334,15 @@ describe('AnalyticsController', () => {
 
       expect(result.operation).toContain('failed');
       expect(result.resultCount).toBe(0);
+      expect(result.performanceRating).toBe('Needs Improvement');
+    });
+
+    it('should handle non-Error exceptions in popular benchmark', async () => {
+      mockProductsService.getPopularProducts.mockRejectedValue('String error');
+
+      const result = await controller.benchmarkPopular();
+
+      expect(result.operation).toContain('failed');
       expect(result.performanceRating).toBe('Needs Improvement');
     });
   });
@@ -204,6 +366,60 @@ describe('AnalyticsController', () => {
       expect(mockProductsService.getRecentProducts).toHaveBeenCalledWith(20);
     });
 
+    it('should return Excellent rating for very fast execution', async () => {
+      const mockRecentProducts = [{ id: 1, title: 'Recent Product' }];
+      mockProductsService.getRecentProducts.mockResolvedValue(
+        mockRecentProducts,
+      );
+
+      // Mock performance.now to simulate very fast execution (< 25ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1015); // 15ms difference
+
+      const result = await controller.benchmarkRecent();
+
+      expect(result.performanceRating).toBe('Excellent');
+      expect(result.executionTime).toBe(15);
+    });
+
+    it('should return Good rating for medium execution', async () => {
+      const mockRecentProducts = [{ id: 1, title: 'Recent Product' }];
+      mockProductsService.getRecentProducts.mockResolvedValue(
+        mockRecentProducts,
+      );
+
+      // Mock performance.now to simulate medium execution (35ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1035); // 35ms difference
+
+      const result = await controller.benchmarkRecent();
+
+      expect(result.performanceRating).toBe('Good');
+      expect(result.executionTime).toBe(35);
+    });
+
+    it('should return Needs Improvement rating for slow execution', async () => {
+      const mockRecentProducts = [{ id: 1, title: 'Recent Product' }];
+      mockProductsService.getRecentProducts.mockResolvedValue(
+        mockRecentProducts,
+      );
+
+      // Mock performance.now to simulate slow execution (70ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1070); // 70ms difference
+
+      const result = await controller.benchmarkRecent();
+
+      expect(result.performanceRating).toBe('Needs Improvement');
+      expect(result.executionTime).toBe(70);
+    });
+
     it('should handle recent products errors', async () => {
       mockProductsService.getRecentProducts.mockRejectedValue(
         new Error('Recent fetch failed'),
@@ -213,6 +429,15 @@ describe('AnalyticsController', () => {
 
       expect(result.operation).toContain('failed');
       expect(result.resultCount).toBe(0);
+      expect(result.performanceRating).toBe('Needs Improvement');
+    });
+
+    it('should handle non-Error exceptions in recent benchmark', async () => {
+      mockProductsService.getRecentProducts.mockRejectedValue('String error');
+
+      const result = await controller.benchmarkRecent();
+
+      expect(result.operation).toContain('failed');
       expect(result.performanceRating).toBe('Needs Improvement');
     });
   });
@@ -243,6 +468,75 @@ describe('AnalyticsController', () => {
       );
     });
 
+    it('should return Excellent rating for very fast execution', async () => {
+      const mockCategoryProducts = {
+        data: [{ id: 1, title: 'Category Product' }],
+        total: 1,
+        page: 1,
+        totalPages: 1,
+      };
+      mockProductsService.getProductsByCategory.mockResolvedValue(
+        mockCategoryProducts,
+      );
+
+      // Mock performance.now to simulate very fast execution (< 40ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1025); // 25ms difference
+
+      const result = await controller.benchmarkCategory('1');
+
+      expect(result.performanceRating).toBe('Excellent');
+      expect(result.executionTime).toBe(25);
+    });
+
+    it('should return Good rating for medium execution', async () => {
+      const mockCategoryProducts = {
+        data: [{ id: 1, title: 'Category Product' }],
+        total: 1,
+        page: 1,
+        totalPages: 1,
+      };
+      mockProductsService.getProductsByCategory.mockResolvedValue(
+        mockCategoryProducts,
+      );
+
+      // Mock performance.now to simulate medium execution (60ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1060); // 60ms difference
+
+      const result = await controller.benchmarkCategory('1');
+
+      expect(result.performanceRating).toBe('Good');
+      expect(result.executionTime).toBe(60);
+    });
+
+    it('should return Needs Improvement rating for slow execution', async () => {
+      const mockCategoryProducts = {
+        data: [{ id: 1, title: 'Category Product' }],
+        total: 1,
+        page: 1,
+        totalPages: 1,
+      };
+      mockProductsService.getProductsByCategory.mockResolvedValue(
+        mockCategoryProducts,
+      );
+
+      // Mock performance.now to simulate slow execution (100ms)
+      jest
+        .spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1100); // 100ms difference
+
+      const result = await controller.benchmarkCategory('1');
+
+      expect(result.performanceRating).toBe('Needs Improvement');
+      expect(result.executionTime).toBe(100);
+    });
+
     it('should handle category benchmark errors', async () => {
       mockProductsService.getProductsByCategory.mockRejectedValue(
         new Error('Category fetch failed'),
@@ -252,6 +546,17 @@ describe('AnalyticsController', () => {
 
       expect(result.operation).toContain('failed');
       expect(result.resultCount).toBe(0);
+      expect(result.performanceRating).toBe('Needs Improvement');
+    });
+
+    it('should handle non-Error exceptions in category benchmark', async () => {
+      mockProductsService.getProductsByCategory.mockRejectedValue(
+        'String error',
+      );
+
+      const result = await controller.benchmarkCategory('1');
+
+      expect(result.operation).toContain('failed');
       expect(result.performanceRating).toBe('Needs Improvement');
     });
   });

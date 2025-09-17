@@ -86,7 +86,7 @@ describe('CreateCategoryDto', () => {
     );
   });
 
-  it('should transform string boolean values correctly', async () => {
+  it('should transform string boolean values correctly', () => {
     const dto = plainToClass(CreateCategoryDto, {
       name: 'Test Category',
       slug: 'test-category',

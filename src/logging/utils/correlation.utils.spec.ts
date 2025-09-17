@@ -6,6 +6,11 @@ import {
   CORRELATION_ID_KEY,
 } from './correlation.utils';
 
+// Mock uuid module
+jest.mock('uuid', () => ({
+  v4: jest.fn().mockReturnValue('test-uuid-1234-5678-9012'),
+}));
+
 describe('Correlation Utils', () => {
   describe('generateCorrelationId', () => {
     it('should generate a string ID', () => {

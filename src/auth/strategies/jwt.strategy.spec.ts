@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthService } from '../auth.service';
@@ -17,6 +19,8 @@ describe('JwtStrategy', () => {
     role: UserRole.CUSTOMER,
     isActive: true,
     passwordHash: 'hashed-password',
+    isDeleted: false,
+    isRecent: false,
     get fullName() {
       return 'Test User';
     },

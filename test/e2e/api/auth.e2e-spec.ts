@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../src/app.module';
+import { AppModule } from '../../../src/app.module';
 import { ValidationPipe } from '@nestjs/common';
 
 describe('Authentication E2E', () => {
@@ -16,6 +16,9 @@ describe('Authentication E2E', () => {
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
 
+    // Set global prefix to match main.ts
+    app.setGlobalPrefix('api/v1');
+
     await app.init();
   });
 
@@ -24,40 +27,45 @@ describe('Authentication E2E', () => {
   });
 
   describe('/auth (Authentication)', () => {
+    const timestamp = Date.now();
     const testUser = {
-      email: 'test-e2e@example.com',
+      email: `test-e2e-${timestamp}@example.com`,
       password: 'TestPassword123!',
       firstName: 'Test',
       lastName: 'User',
     };
 
-    it('/auth/register (POST) - should register a new user', async () => {
+    it('/api/v1/auth/register (POST) - should register a new user', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const response = await request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/v1/auth/register')
         .send(testUser)
         .expect(201);
 
-      expect(response.body).toHaveProperty('access_token');
-      expect(response.body).toHaveProperty('user');
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('data');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      expect(response.body.user.email).toBe(testUser.email);
+      expect(response.body.data).toHaveProperty('access_token');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(response.body.data).toHaveProperty('user');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(response.body.data.user.email).toBe(testUser.email);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      authToken = response.body.access_token;
+      authToken = response.body.data.access_token;
     });
 
-    it('/auth/register (POST) - should fail with duplicate email', async () => {
+    it('/api/v1/auth/register (POST) - should fail with duplicate email', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       await request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/v1/auth/register')
         .send(testUser)
         .expect(409);
     });
 
-    it('/auth/register (POST) - should fail with invalid data', async () => {
+    it('/api/v1/auth/register (POST) - should fail with invalid data', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       await request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/v1/auth/register')
         .send({
           email: 'invalid-email',
           password: '123',
@@ -66,24 +74,28 @@ describe('Authentication E2E', () => {
         .expect(400);
     });
 
-    it('/auth/login (POST) - should login with valid credentials', async () => {
+    it('/api/v1/auth/login (POST) - should login with valid credentials', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const response = await request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/api/v1/auth/login')
         .send({
           email: testUser.email,
           password: testUser.password,
         })
         .expect(200);
 
-      expect(response.body).toHaveProperty('access_token');
-      expect(response.body).toHaveProperty('user');
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('data');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(response.body.data).toHaveProperty('access_token');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(response.body.data).toHaveProperty('user');
     });
 
-    it('/auth/login (POST) - should fail with invalid credentials', async () => {
+    it('/api/v1/auth/login (POST) - should fail with invalid credentials', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       await request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/api/v1/auth/login')
         .send({
           email: testUser.email,
           password: 'wrongpassword',
@@ -91,53 +103,57 @@ describe('Authentication E2E', () => {
         .expect(401);
     });
 
-    it('/auth/profile (GET) - should get user profile with valid token', async () => {
+    it('/api/v1/auth/profile (GET) - should get user profile with valid token', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const response = await request(app.getHttpServer())
-        .get('/auth/profile')
+        .get('/api/v1/auth/profile')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      expect(response.body.email).toBe(testUser.email);
+      expect(response.body.data.email).toBe(testUser.email);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      expect(response.body.firstName).toBe(testUser.firstName);
+      expect(response.body.data.firstName).toBe(testUser.firstName);
     });
 
-    it('/auth/profile (GET) - should fail without token', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      await request(app.getHttpServer()).get('/auth/profile').expect(401);
-    });
-
-    it('/auth/profile (GET) - should fail with invalid token', async () => {
+    it('/api/v1/auth/profile (GET) - should fail without token', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       await request(app.getHttpServer())
-        .get('/auth/profile')
+        .get('/api/v1/auth/profile')
+        .expect(401);
+    });
+
+    it('/api/v1/auth/profile (GET) - should fail with invalid token', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/profile')
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
     });
 
-    it('/auth/logout (POST) - should logout successfully', async () => {
+    it('/api/v1/auth/logout (POST) - should logout successfully', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const response = await request(app.getHttpServer())
-        .post('/auth/logout')
+        .post('/api/v1/auth/logout')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      expect(response.body.message).toBe('Successfully logged out');
+      expect(response.body.data.message).toBe('Successfully logged out');
     });
 
-    it('/auth/test (GET) - should test database connectivity', async () => {
+    it('/api/v1/auth/test (GET) - should test database connectivity', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const response = await request(app.getHttpServer())
-        .get('/auth/test')
+        .get('/api/v1/auth/test')
         .expect(200);
 
-      expect(response.body).toHaveProperty('message');
-      expect(response.body).toHaveProperty('userCount');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      expect(typeof response.body.userCount).toBe('number');
+      expect(response.body.data).toHaveProperty('message');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(response.body.data).toHaveProperty('userCount');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(typeof response.body.data.userCount).toBe('number');
     });
   });
 });

@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/unbound-method */
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { LoggingModule } from './logging.module';
 import { WinstonModule } from 'nest-winston';
@@ -80,7 +85,6 @@ describe('LoggingModule', () => {
       forRoutes: jest.fn(),
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     instance.configure(mockConsumer as any);
 
     expect(mockConsumer.apply).toHaveBeenCalled();

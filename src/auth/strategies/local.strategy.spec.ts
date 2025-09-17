@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { LocalStrategy } from './local.strategy';
 import { AuthService } from '../auth.service';
@@ -16,6 +18,8 @@ describe('LocalStrategy', () => {
     role: UserRole.CUSTOMER,
     isActive: true,
     passwordHash: 'hashed-password',
+    isDeleted: false,
+    isRecent: false,
     get fullName() {
       return 'Test User';
     },
