@@ -16,6 +16,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
+    "test:cov:html": "jest --coverage --coverageReporters=html",
+    "test:cov:text": "jest --coverage --coverageReporters=text-summary",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
@@ -94,9 +96,33 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!**/*.spec.ts",
+      "!**/*.e2e-spec.ts",
+      "!**/main.ts",
+      "!**/index.ts",
+      "!**/*.config.ts",
+      "!**/migrations/**",
+      "!**/seeds/**"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "coverageReporters": [
+      "text",
+      "text-summary",
+      "html",
+      "lcov"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 90,
+        "functions": 90,
+        "lines": 90,
+        "statements": 90
+      }
+    },
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "<rootDir>/../test/setup.ts"
+    ]
   }
 }
