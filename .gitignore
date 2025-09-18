@@ -184,3 +184,7 @@ audit.json
 tmp/
 temp/
 .temp/
+
+# Stryker mutation testing temporary files
+stryker-tmp/
+reports/

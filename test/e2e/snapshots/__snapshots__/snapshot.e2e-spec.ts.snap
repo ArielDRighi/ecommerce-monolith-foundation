@@ -1,0 +1,653 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Snapshot Testing E2E - API Response Validation Authentication Response Snapshots should match login response structure snapshot: auth-login-response 1`] = `
+{
+  "data": {
+    "expires_in": 300,
+    "token_type": "Bearer",
+    "user": {
+      "email": "snapshot-admin@test.com",
+      "firstName": "Snapshot",
+      "isActive": true,
+      "lastName": "Admin",
+      "phone": null,
+      "role": "admin",
+    },
+  },
+  "meta": {
+    "method": "POST",
+    "path": "/api/v1/auth/login",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Authentication Response Snapshots should match profile response structure snapshot: auth-profile-response 1`] = `
+{
+  "data": {
+    "email": "snapshot-admin@test.com",
+    "firstName": "Snapshot",
+    "isActive": true,
+    "lastName": "Admin",
+    "phone": null,
+    "role": "admin",
+  },
+  "meta": {
+    "method": "GET",
+    "path": "/api/v1/auth/profile",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Authentication Response Snapshots should match register response structure snapshot: auth-register-response 1`] = `
+{
+  "data": {
+    "expires_in": 300,
+    "token_type": "Bearer",
+    "user": {
+      "email": "snapshot-register@test.com",
+      "firstName": "Snapshot",
+      "isActive": true,
+      "lastName": "Register",
+      "phone": null,
+      "role": "customer",
+    },
+  },
+  "meta": {
+    "method": "POST",
+    "path": "/api/v1/auth/register",
+    "statusCode": 201,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Authentication Response Snapshots should match validation error response snapshot: auth-validation-error-response 1`] = `
+{
+  "error": {
+    "code": "BadRequestException",
+    "details": {
+      "error": "Bad Request",
+      "message": {
+        "0": "First name must be at least 2 characters long",
+        "1": "First name is required",
+        "2": "Last name must not exceed 50 characters",
+        "3": "Last name must be at least 2 characters long",
+        "4": "Last name must be a string",
+        "5": "Last name is required",
+        "6": "Email must be a valid email address",
+        "7": "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+        "8": "Password must be at least 8 characters long",
+      },
+      "statusCode": 400,
+    },
+    "message": "Bad Request Exception",
+  },
+  "meta": {
+    "method": "POST",
+    "path": "/api/v1/auth/register",
+    "statusCode": 400,
+    "version": "1.0.0",
+  },
+  "success": false,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Category Response Snapshots should match category creation response structure snapshot: category-creation-response 1`] = `
+{
+  "data": {
+    "description": "Category created for snapshot testing",
+    "isActive": true,
+    "name": "Snapshot Category",
+    "slug": "snapshot-category",
+  },
+  "meta": {
+    "method": "POST",
+    "path": "/api/v1/products/categories",
+    "statusCode": 201,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Category Response Snapshots should match category details response structure snapshot: category-details-response 1`] = `
+{
+  "data": {
+    "description": "Electronics category for snapshot testing",
+    "isActive": true,
+    "name": "Snapshot Electronics",
+    "slug": "snapshot-electronics",
+  },
+  "meta": {
+    "method": "GET",
+    "path": "/api/v1/products/categories/{uuid}",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Category Response Snapshots should match category update response structure snapshot: category-update-response 1`] = `
+{
+  "data": {
+    "description": "Updated description for snapshot testing",
+    "isActive": true,
+    "name": "Updated Snapshot Electronics",
+    "slug": "snapshot-electronics",
+  },
+  "meta": {
+    "method": "PATCH",
+    "path": "/api/v1/products/categories/{uuid}",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Error Response Snapshots should match forbidden error response snapshot: forbidden-error-response 1`] = `
+{
+  "error": {
+    "code": "ForbiddenException",
+    "details": {
+      "error": "Forbidden",
+      "message": "Access denied. Required roles: admin",
+      "statusCode": 403,
+    },
+    "message": "Access denied. Required roles: admin",
+  },
+  "meta": {
+    "method": "POST",
+    "path": "/api/v1/products",
+    "statusCode": 403,
+    "version": "1.0.0",
+  },
+  "success": false,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Error Response Snapshots should match not found error response snapshot: not-found-error-response 1`] = `
+{
+  "error": {
+    "code": "NotFoundException",
+    "details": {
+      "error": "Not Found",
+      "message": "Product with ID 123e4567-e89b-12d3-a456-426614174000 not found",
+      "statusCode": 404,
+    },
+    "message": "Product with ID 123e4567-e89b-12d3-a456-426614174000 not found",
+  },
+  "meta": {
+    "method": "GET",
+    "path": "/api/v1/products/{uuid}",
+    "statusCode": 404,
+    "version": "1.0.0",
+  },
+  "success": false,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Error Response Snapshots should match unauthorized error response snapshot: unauthorized-error-response 1`] = `
+{
+  "error": {
+    "code": "UnauthorizedException",
+    "details": {
+      "message": "Unauthorized",
+      "statusCode": 401,
+    },
+    "message": "Unauthorized",
+  },
+  "meta": {
+    "method": "POST",
+    "path": "/api/v1/products",
+    "statusCode": 401,
+    "version": "1.0.0",
+  },
+  "success": false,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Error Response Snapshots should match validation error response snapshot: product-validation-error-response 1`] = `
+{
+  "error": {
+    "code": "BadRequestException",
+    "details": {
+      "error": "Bad Request",
+      "message": {
+        "0": "Product name must be between 3 and 500 characters",
+        "1": "Slug must contain only lowercase letters, numbers, and hyphens",
+        "2": "Slug must be between 3 and 100 characters",
+        "3": "Price must be greater than or equal to 0",
+        "4": "Stock cannot be negative",
+        "5": "Each category ID must be a valid UUID",
+        "6": "Product must belong to at least one category",
+        "7": "categoryIds must be an array",
+      },
+      "statusCode": 400,
+    },
+    "message": "Bad Request Exception",
+  },
+  "meta": {
+    "method": "POST",
+    "path": "/api/v1/products",
+    "statusCode": 400,
+    "version": "1.0.0",
+  },
+  "success": false,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Pagination Response Snapshots should match empty search result response snapshot: empty-search-result-response 1`] = `
+{
+  "data": [],
+  "meta": {
+    "method": "GET",
+    "path": "/api/v1/products/search?page=1&limit=10&search=NonExistentProductSearchTerm",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "pagination": {
+    "limit": 10,
+    "page": 1,
+    "total": 0,
+    "totalPages": 0,
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Pagination Response Snapshots should match paginated search response structure snapshot: paginated-search-response 1`] = `
+{
+  "data": [
+    {
+      "attributes": {
+        "brand": "SnapshotBrand",
+        "color": "Red",
+        "warranty": "1 year",
+      },
+      "categories": [
+        {
+          "description": "Updated description for snapshot testing",
+          "isActive": true,
+          "name": "Updated Snapshot Electronics",
+          "slug": "snapshot-electronics",
+        },
+      ],
+      "createdBy": {},
+      "description": "Product created for snapshot testing",
+      "images": [
+        "create-1.jpg",
+        "create-2.jpg",
+      ],
+      "isActive": true,
+      "name": "Snapshot Product Creation",
+      "orderCount": 0,
+      "price": 199.99,
+      "rating": null,
+      "reviewCount": 0,
+      "sku": "SNAP-CRT1",
+      "slug": "snapshot-product-creation",
+      "stock": 50,
+      "viewCount": 0,
+    },
+    {
+      "attributes": {
+        "brand": "SnapshotTech",
+        "color": "Black",
+        "warranty": "2 years",
+        "weight": "1.5kg",
+      },
+      "categories": [
+        {
+          "description": "Updated description for snapshot testing",
+          "isActive": true,
+          "name": "Updated Snapshot Electronics",
+          "slug": "snapshot-electronics",
+        },
+      ],
+      "createdBy": {},
+      "description": "A high-quality product for snapshot testing with consistent data",
+      "images": [
+        "snapshot-product-1.jpg",
+        "snapshot-product-2.jpg",
+      ],
+      "isActive": true,
+      "name": "Updated Snapshot Product",
+      "orderCount": 0,
+      "price": 399.99,
+      "rating": null,
+      "reviewCount": 0,
+      "sku": "SNAP-001",
+      "slug": "snapshot-test-product",
+      "stock": 75,
+      "viewCount": 2,
+    },
+  ],
+  "meta": {
+    "method": "GET",
+    "path": "/api/v1/products/search?page=1&limit=5&sortBy=name&sortOrder=ASC",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "pagination": {
+    "limit": 5,
+    "page": 1,
+    "total": 2,
+    "totalPages": 1,
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Product Response Snapshots should match product by slug response structure snapshot: product-by-slug-response 1`] = `
+{
+  "data": {
+    "attributes": {
+      "brand": "SnapshotTech",
+      "color": "Black",
+      "warranty": "2 years",
+      "weight": "1.5kg",
+    },
+    "categories": [
+      {
+        "description": "Electronics category for snapshot testing",
+        "isActive": true,
+        "name": "Snapshot Electronics",
+        "slug": "snapshot-electronics",
+      },
+    ],
+    "createdBy": {},
+    "description": "A high-quality product for snapshot testing with consistent data",
+    "images": [
+      "snapshot-product-1.jpg",
+      "snapshot-product-2.jpg",
+    ],
+    "isActive": true,
+    "name": "Updated Snapshot Product",
+    "orderCount": 0,
+    "price": 399.99,
+    "rating": null,
+    "reviewCount": 0,
+    "sku": "SNAP-001",
+    "slug": "snapshot-test-product",
+    "stock": 75,
+    "viewCount": 1,
+  },
+  "meta": {
+    "method": "GET",
+    "path": "/api/v1/products/slug/snapshot-test-product",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Product Response Snapshots should match product creation response structure snapshot: product-creation-response 1`] = `
+{
+  "data": {
+    "attributes": {
+      "brand": "SnapshotBrand",
+      "color": "Red",
+      "warranty": "1 year",
+    },
+    "categories": [
+      {
+        "description": "Electronics category for snapshot testing",
+        "isActive": true,
+        "name": "Snapshot Electronics",
+        "slug": "snapshot-electronics",
+      },
+    ],
+    "createdBy": {
+      "email": "snapshot-admin@test.com",
+      "firstName": "Snapshot",
+      "lastName": "Admin",
+    },
+    "description": "Product created for snapshot testing",
+    "images": [
+      "create-1.jpg",
+      "create-2.jpg",
+    ],
+    "isActive": true,
+    "name": "Snapshot Product Creation",
+    "orderCount": 0,
+    "price": 199.99,
+    "rating": null,
+    "reviewCount": 0,
+    "sku": "SNAP-CRT1",
+    "slug": "snapshot-product-creation",
+    "stock": 50,
+    "viewCount": 0,
+  },
+  "meta": {
+    "method": "POST",
+    "path": "/api/v1/products",
+    "statusCode": 201,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Product Response Snapshots should match product details response structure snapshot: product-details-response 1`] = `
+{
+  "data": {
+    "attributes": {
+      "brand": "SnapshotTech",
+      "color": "Black",
+      "warranty": "2 years",
+      "weight": "1.5kg",
+    },
+    "categories": [
+      {
+        "description": "Electronics category for snapshot testing",
+        "isActive": true,
+        "name": "Snapshot Electronics",
+        "slug": "snapshot-electronics",
+      },
+    ],
+    "createdBy": {
+      "email": "snapshot-admin@test.com",
+      "firstName": "Snapshot",
+      "lastName": "Admin",
+    },
+    "description": "A high-quality product for snapshot testing with consistent data",
+    "images": [
+      "snapshot-product-1.jpg",
+      "snapshot-product-2.jpg",
+    ],
+    "isActive": true,
+    "name": "Snapshot Test Product",
+    "orderCount": 0,
+    "price": 299.99,
+    "rating": null,
+    "reviewCount": 0,
+    "sku": "SNAP-001",
+    "slug": "snapshot-test-product",
+    "stock": 100,
+    "viewCount": 0,
+  },
+  "meta": {
+    "method": "GET",
+    "path": "/api/v1/products/{uuid}",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Product Response Snapshots should match product search response structure snapshot: product-search-response 1`] = `
+{
+  "data": [
+    {
+      "attributes": {
+        "brand": "SnapshotBrand",
+        "color": "Red",
+        "warranty": "1 year",
+      },
+      "categories": [
+        {
+          "description": "Electronics category for snapshot testing",
+          "isActive": true,
+          "name": "Snapshot Electronics",
+          "slug": "snapshot-electronics",
+        },
+      ],
+      "createdBy": {},
+      "description": "Product created for snapshot testing",
+      "images": [
+        "create-1.jpg",
+        "create-2.jpg",
+      ],
+      "isActive": true,
+      "name": "Snapshot Product Creation",
+      "orderCount": 0,
+      "price": 199.99,
+      "rating": null,
+      "reviewCount": 0,
+      "sku": "SNAP-CRT1",
+      "slug": "snapshot-product-creation",
+      "stock": 50,
+      "viewCount": 0,
+    },
+    {
+      "attributes": {
+        "brand": "SnapshotTech",
+        "color": "Black",
+        "warranty": "2 years",
+        "weight": "1.5kg",
+      },
+      "categories": [
+        {
+          "description": "Electronics category for snapshot testing",
+          "isActive": true,
+          "name": "Snapshot Electronics",
+          "slug": "snapshot-electronics",
+        },
+      ],
+      "createdBy": {},
+      "description": "A high-quality product for snapshot testing with consistent data",
+      "images": [
+        "snapshot-product-1.jpg",
+        "snapshot-product-2.jpg",
+      ],
+      "isActive": true,
+      "name": "Updated Snapshot Product",
+      "orderCount": 0,
+      "price": 399.99,
+      "rating": null,
+      "reviewCount": 0,
+      "sku": "SNAP-001",
+      "slug": "snapshot-test-product",
+      "stock": 75,
+      "viewCount": 1,
+    },
+  ],
+  "meta": {
+    "method": "GET",
+    "path": "/api/v1/products/search?page=1&limit=10&search=Snapshot",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "pagination": {
+    "limit": 10,
+    "page": 1,
+    "total": 2,
+    "totalPages": 1,
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Product Response Snapshots should match product update response structure snapshot: product-update-response 1`] = `
+{
+  "data": {
+    "attributes": {
+      "brand": "SnapshotTech",
+      "color": "Black",
+      "warranty": "2 years",
+      "weight": "1.5kg",
+    },
+    "categories": [
+      {
+        "description": "Electronics category for snapshot testing",
+        "isActive": true,
+        "name": "Snapshot Electronics",
+        "slug": "snapshot-electronics",
+      },
+    ],
+    "createdBy": {
+      "email": "snapshot-admin@test.com",
+      "firstName": "Snapshot",
+      "lastName": "Admin",
+    },
+    "description": "A high-quality product for snapshot testing with consistent data",
+    "images": [
+      "snapshot-product-1.jpg",
+      "snapshot-product-2.jpg",
+    ],
+    "isActive": true,
+    "name": "Updated Snapshot Product",
+    "orderCount": 0,
+    "price": 399.99,
+    "rating": null,
+    "reviewCount": 0,
+    "sku": "SNAP-001",
+    "slug": "snapshot-test-product",
+    "stock": 75,
+    "viewCount": 1,
+  },
+  "meta": {
+    "method": "PATCH",
+    "path": "/api/v1/products/{uuid}",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Success Response Structure Snapshots should match logout success response snapshot: logout-success-response 1`] = `
+{
+  "data": {
+    "message": "Successfully logged out",
+  },
+  "meta": {
+    "method": "POST",
+    "path": "/api/v1/auth/logout",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;
+
+exports[`Snapshot Testing E2E - API Response Validation Success Response Structure Snapshots should match success response wrapper structure: success-response-wrapper 1`] = `
+{
+  "data": {
+    "activeIndexes": 29,
+    "avgResponseTime": "45ms",
+    "lastOptimization": "2025-09-16",
+    "optimizationLevel": "Enterprise-grade",
+    "scalabilityRating": "Tested with 5000+ products, ready for 100k+",
+    "status": "Excellent",
+  },
+  "meta": {
+    "method": "GET",
+    "path": "/api/v1/analytics/dashboard",
+    "statusCode": 200,
+    "version": "1.0.0",
+  },
+  "success": true,
+}
+`;

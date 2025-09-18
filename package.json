@@ -13,11 +13,11 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:cov:html": "jest --coverage --coverageReporters=html",
-    "test:cov:text": "jest --coverage --coverageReporters=text-summary",
+    "test": "jest --config jest.config.js",
+    "test:watch": "jest --config jest.config.js --watch",
+    "test:cov": "jest --config jest.config.js --coverage",
+    "test:cov:html": "jest --config jest.config.js --coverage --coverageReporters=html",
+    "test:cov:text": "jest --config jest.config.js --coverage --coverageReporters=text-summary",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/config/jest-e2e.json",
     "test:e2e:api": "jest --config ./test/config/jest-e2e.json --testPathPatterns=api",
@@ -25,6 +25,13 @@
     "test:e2e:integration": "jest --config ./test/config/jest-e2e.json --testPathPatterns=integration",
     "test:e2e:business": "jest --config ./test/config/jest-e2e.json --testPathPatterns=business-flows",
     "test:e2e:smoke": "jest --config ./test/config/jest-e2e.json --testPathPatterns=smoke",
+    "test:e2e:performance": "jest --config ./test/config/jest-e2e.json --testPathPatterns=performance",
+    "test:e2e:snapshots": "jest --config ./test/config/jest-e2e.json --testPathPatterns=snapshots",
+    "test:snapshots:update": "jest --config ./test/config/jest-e2e.json --testPathPatterns=snapshots --updateSnapshot",
+    "test:mutation": "echo '⚠️  Mutation testing takes 5-10 minutes. Use specific targets for faster results.' && stryker run",
+    "test:mutation:auth": "stryker run --mutate src/auth/auth.service.ts",
+    "test:mutation:products": "stryker run --mutate src/products/products.service.ts",
+    "test:mutation:quick": "stryker run --mutate src/auth/auth.service.ts --concurrency 2",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "migration:generate": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d src/config/typeorm.config.ts",
     "migration:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d src/config/typeorm.config.ts",
@@ -65,6 +72,9 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
+    "@stryker-mutator/core": "^9.1.1",
+    "@stryker-mutator/jest-runner": "^9.1.1",
+    "@stryker-mutator/typescript-checker": "^9.1.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
@@ -88,49 +98,5 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "transformIgnorePatterns": [
-      "node_modules/(?!(uuid)/)"
-    ],
-    "collectCoverageFrom": [
-      "**/*.(t|j)s",
-      "!**/*.spec.ts",
-      "!**/*.e2e-spec.ts",
-      "!**/main.ts",
-      "!**/index.ts",
-      "!**/*.config.ts",
-      "!**/migrations/**",
-      "!**/seeds/**"
-    ],
-    "coverageDirectory": "../coverage",
-    "coverageReporters": [
-      "text",
-      "text-summary",
-      "html",
-      "lcov"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 90,
-        "functions": 90,
-        "lines": 90,
-        "statements": 90
-      }
-    },
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "<rootDir>/../test/config/setup.ts"
-    ]
   }
 }

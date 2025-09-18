@@ -9,7 +9,6 @@ import {
   Min,
   Max,
   Length,
-  ValidateIf,
   registerDecorator,
   ValidationOptions,
   ValidationArguments,
@@ -36,18 +35,19 @@ function IsValidPriceRange(validationOptions?: ValidationOptions) {
   return function (object: any, propertyName: string) {
     registerDecorator({
       name: 'isValidPriceRange',
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
+        validate(_value: any, args: ValidationArguments) {
           const obj = args.object as ProductSearchDto;
           if (obj.minPrice !== undefined && obj.maxPrice !== undefined) {
             return obj.maxPrice >= obj.minPrice;
           }
           return true; // Valid if either is undefined
         },
-        defaultMessage(args: ValidationArguments) {
+        defaultMessage() {
           return 'Maximum price must be greater than or equal to minimum price';
         },
       },

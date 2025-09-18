@@ -789,9 +789,13 @@ describe('Contract Testing - API Contracts & Data Schemas', () => {
           500: 'Internal Server Error',
         };
 
-        if (expectedErrors[endpoint.expectedStatus]) {
+        if (
+          expectedErrors[endpoint.expectedStatus as keyof typeof expectedErrors]
+        ) {
           expect(response.body.error.details.error).toBe(
-            expectedErrors[endpoint.expectedStatus],
+            expectedErrors[
+              endpoint.expectedStatus as keyof typeof expectedErrors
+            ],
           );
         }
       }
