@@ -12,7 +12,10 @@ describe('TypeORM Config', () => {
 
   it('should have correct migration configuration', () => {
     expect(typeormConfig.options.migrationsTableName).toBe('migrations');
-    expect(typeormConfig.options.synchronize).toBe(false);
+    // Synchronize should be true in CI/test environments, false otherwise
+    const expectedSync =
+      process.env.NODE_ENV === 'test' || process.env.CI === 'true';
+    expect(typeormConfig.options.synchronize).toBe(expectedSync);
     expect(typeormConfig.options.migrationsRun).toBe(false);
   });
 

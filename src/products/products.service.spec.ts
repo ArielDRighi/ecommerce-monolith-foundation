@@ -1097,6 +1097,8 @@ describe('ProductsService', () => {
           addOrderBy: jest.fn().mockReturnThis(),
           skip: jest.fn().mockReturnThis(),
           take: jest.fn().mockReturnThis(),
+          getMany: jest.fn().mockResolvedValue([]),
+          getCount: jest.fn().mockResolvedValue(0),
           getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
         };
 

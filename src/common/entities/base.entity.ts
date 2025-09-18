@@ -17,6 +17,7 @@ export abstract class BaseEntity {
   @CreateDateColumn({
     type: 'timestamp with time zone',
     default: () => 'CURRENT_TIMESTAMP',
+    name: 'created_at',
   })
   createdAt: Date;
 
@@ -24,16 +25,18 @@ export abstract class BaseEntity {
     type: 'timestamp with time zone',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
+    name: 'updated_at',
   })
   updatedAt: Date;
 
   @DeleteDateColumn({
     type: 'timestamp with time zone',
     nullable: true,
+    name: 'deleted_at',
   })
   deletedAt?: Date;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: 'boolean', default: true, name: 'is_active' })
   isActive: boolean;
 
   /**

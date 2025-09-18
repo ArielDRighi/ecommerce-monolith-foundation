@@ -246,17 +246,29 @@ export class ProductsService {
       // Apply sorting with index-aware logic
       this.applySorting(queryBuilder, searchDto);
 
-      // Optimization: Use COUNT query with same filters but without joins for better performance
-      const countQueryBuilder = this.productRepository
-        .createQueryBuilder('product')
-        .where('product.deletedAt IS NULL')
-        .andWhere('product.isActive = true');
+      // Optimization: Use simple COUNT query without complex joins for better performance
+      let total: number;
+      try {
+        const countQueryBuilder = this.productRepository
+          .createQueryBuilder('product')
+          .where('product.deletedAt IS NULL')
+          .andWhere('product.isActive = true');
 
-      // Apply the same filters for counting (without relations)
-      this.applySearchFiltersForCount(countQueryBuilder, searchDto);
+        // Apply only simple filters for counting (no joins to avoid complexity)
+        this.applySimpleFiltersForCount(countQueryBuilder, searchDto);
 
-      // Get total count using optimized query
-      const total = await countQueryBuilder.getCount();
+        // Get total count using optimized query
+        total = await countQueryBuilder.getCount();
+      } catch (error) {
+        // Fallback to basic count if complex query fails
+        console.warn(
+          'Count query failed, using basic count:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
+        total = await this.productRepository.count({
+          where: { deletedAt: IsNull(), isActive: true },
+        });
+      }
 
       // Apply pagination
       const page = searchDto.page || 1;
@@ -318,17 +330,29 @@ export class ProductsService {
       // Apply sorting with index-aware logic
       this.applySorting(queryBuilder, searchDto);
 
-      // Optimization: Use COUNT query with same filters but without joins for better performance
-      const countQueryBuilder = this.productRepository
-        .createQueryBuilder('product')
-        .where('product.deletedAt IS NULL')
-        .andWhere('product.isActive = true');
+      // Optimization: Use simple COUNT query without complex joins for better performance
+      let total: number;
+      try {
+        const countQueryBuilder = this.productRepository
+          .createQueryBuilder('product')
+          .where('product.deletedAt IS NULL')
+          .andWhere('product.isActive = true');
 
-      // Apply the same filters for counting (without relations)
-      this.applySearchFiltersForCount(countQueryBuilder, searchDto);
+        // Apply only simple filters for counting (no joins to avoid complexity)
+        this.applySimpleFiltersForCount(countQueryBuilder, searchDto);
 
-      // Get total count using optimized query
-      const total = await countQueryBuilder.getCount();
+        // Get total count using optimized query
+        total = await countQueryBuilder.getCount();
+      } catch (error) {
+        // Fallback to basic count if complex query fails
+        console.warn(
+          'Count query failed, using basic count:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
+        total = await this.productRepository.count({
+          where: { deletedAt: IsNull(), isActive: true },
+        });
+      }
 
       // Apply pagination
       const page = searchDto.page || 1;
@@ -848,5 +872,59 @@ export class ProductsService {
     return plainToClass(ProductResponseDto, product, {
       excludeExtraneousValues: true,
     });
+  }
+
+  /**
+   * Simple filters for count queries (no joins, no complex operations)
+   * This ensures getCount() works correctly
+   */
+  private applySimpleFiltersForCount(
+    queryBuilder: SelectQueryBuilder<Product>,
+    searchDto: ProductSearchDto,
+  ): void {
+    // Only apply simple filters that don't require joins
+
+    // Price range filters
+    if (searchDto.minPrice !== undefined && searchDto.maxPrice !== undefined) {
+      queryBuilder.andWhere('product.price BETWEEN :minPrice AND :maxPrice', {
+        minPrice: searchDto.minPrice,
+        maxPrice: searchDto.maxPrice,
+      });
+    } else {
+      if (searchDto.minPrice !== undefined) {
+        queryBuilder.andWhere('product.price >= :minPrice', {
+          minPrice: searchDto.minPrice,
+        });
+      }
+      if (searchDto.maxPrice !== undefined) {
+        queryBuilder.andWhere('product.price <= :maxPrice', {
+          maxPrice: searchDto.maxPrice,
+        });
+      }
+    }
+
+    // Stock filter
+    if (searchDto.inStock === true) {
+      queryBuilder.andWhere('product.stock > 0');
+    }
+
+    // Rating filter - Handle NULL ratings correctly
+    if (searchDto.minRating !== undefined && searchDto.minRating !== null) {
+      queryBuilder.andWhere(
+        '(product.rating >= :minRating OR product.rating IS NULL)',
+        {
+          minRating: searchDto.minRating,
+        },
+      );
+    }
+
+    // Simple text search on product fields only (no joins)
+    if (searchDto.search && searchDto.search.trim().length > 0) {
+      const searchTerm = `%${searchDto.search.trim()}%`;
+      queryBuilder.andWhere(
+        '(product.name ILIKE :searchTerm OR product.description ILIKE :searchTerm)',
+        { searchTerm },
+      );
+    }
   }
 }

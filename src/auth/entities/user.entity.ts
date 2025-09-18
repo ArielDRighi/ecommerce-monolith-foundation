@@ -9,13 +9,13 @@ export enum UserRole {
 }
 
 @Entity('users')
-@Index(['email'], { unique: true, where: '"deletedAt" IS NULL' })
-@Index(['role'], { where: '"isActive" = true' })
+@Index(['email'], { unique: true, where: '"deleted_at" IS NULL' })
+@Index(['role'], { where: '"is_active" = true' })
 export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, name: 'password_hash' })
   @Exclude({ toPlainOnly: true })
   passwordHash: string;
 
@@ -26,19 +26,27 @@ export class User extends BaseEntity {
   })
   role: UserRole;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'first_name' })
   firstName?: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'last_name' })
   lastName?: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
   phone?: string;
 
-  @Column({ type: 'timestamp with time zone', nullable: true })
+  @Column({
+    type: 'timestamp with time zone',
+    nullable: true,
+    name: 'last_login_at',
+  })
   lastLoginAt?: Date;
 
-  @Column({ type: 'timestamp with time zone', nullable: true })
+  @Column({
+    type: 'timestamp with time zone',
+    nullable: true,
+    name: 'email_verified_at',
+  })
   emailVerifiedAt?: Date;
 
   // Relations
