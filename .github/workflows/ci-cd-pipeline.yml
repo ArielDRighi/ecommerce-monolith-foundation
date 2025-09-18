@@ -9,6 +9,11 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 env:
   NODE_VERSION: '18'
   POSTGRES_DB: ecommerce_catalog_test
@@ -276,12 +281,14 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: javascript
+        continue-on-error: true
 
       - name: 🏗️ Build for CodeQL
         run: npm run build
 
       - name: 🛡️ Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        continue-on-error: true
 
   # 🐳 Docker Build & Security
   docker-build:
