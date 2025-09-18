@@ -324,7 +324,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality-summary
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    # environment: staging  # Uncomment when environment is configured in GitHub
+    environment: staging
 
     steps:
       - name: 🔄 Checkout Code
@@ -335,7 +335,16 @@ jobs:
           echo "🚀 Deploying to staging environment..."
           echo "Branch: ${{ github.ref }}"
           echo "Commit: ${{ github.sha }}"
-          # Add actual deployment commands here
+          echo "Environment: staging"
+          # Example deployment commands:
+          # docker-compose -f docker-compose.prod.yml down
+          # docker-compose -f docker-compose.prod.yml pull
+          # docker-compose -f docker-compose.prod.yml up -d
+          # ./scripts/deploy-prod.sh check
+        env:
+          DATABASE_HOST: ${{ secrets.STAGING_DB_HOST }}
+          DATABASE_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+          REDIS_PASSWORD: ${{ secrets.STAGING_REDIS_PASSWORD }}
 
   # 📦 Deploy to Production (only on main with manual approval)
   deploy-production:
@@ -343,7 +352,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality-summary
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    # environment: production  # Uncomment when environment is configured in GitHub
+    environment: production
 
     steps:
       - name: 🔄 Checkout Code
@@ -354,4 +363,14 @@ jobs:
           echo "📦 Deploying to production environment..."
           echo "Branch: ${{ github.ref }}"
           echo "Commit: ${{ github.sha }}"
-          # Add actual deployment commands here
+          echo "Environment: production"
+          # Example deployment commands:
+          # ./scripts/deploy-prod.sh deploy
+          # Health check after deployment
+          # curl -f https://your-domain.com/health || exit 1
+        env:
+          DATABASE_HOST: ${{ secrets.PROD_DB_HOST }}
+          DATABASE_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+          REDIS_PASSWORD: ${{ secrets.PROD_REDIS_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
