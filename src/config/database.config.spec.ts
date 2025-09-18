@@ -78,7 +78,7 @@ describe('Database Config', () => {
     expect(config.synchronize).toBe(true);
   });
 
-  it('should include query logging in development environment', () => {
+  it('should configure logging for development', () => {
     process.env.NODE_ENV = 'development';
 
     const config = databaseConfig();
@@ -86,7 +86,7 @@ describe('Database Config', () => {
     expect(config.logging).toEqual(['query', 'error']);
   });
 
-  it('should only include error logging in non-development environment', () => {
+  it('should configure logging for production to only show errors', () => {
     process.env.NODE_ENV = 'production';
 
     const config = databaseConfig();

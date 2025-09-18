@@ -66,12 +66,9 @@ async function bootstrap() {
         'MIT License',
         'https://github.com/ArielDRighi/ecommerce-monolith-foundation/blob/main/LICENSE',
       )
-      .addServer(`http://localhost:3000/${apiPrefix}`, 'Development Server')
-      .addServer(
-        `https://staging.api.example.com/${apiPrefix}`,
-        'Staging Server',
-      )
-      .addServer(`https://api.example.com/${apiPrefix}`, 'Production Server')
+      .addServer(`http://localhost:3000`, 'Development Server')
+      .addServer(`https://staging.api.example.com`, 'Staging Server')
+      .addServer(`https://api.example.com`, 'Production Server')
       .addBearerAuth(
         {
           type: 'http',
@@ -90,10 +87,6 @@ async function bootstrap() {
       .addTag(
         'Products',
         'Comprehensive product CRUD operations and advanced search functionality',
-      )
-      .addTag(
-        'Categories',
-        'Product category management with hierarchical support',
       )
       .addTag(
         'Performance Analytics',
@@ -137,16 +130,6 @@ async function bootstrap() {
       jsonDocumentUrl: `${swaggerPath}/json`,
       yamlDocumentUrl: `${swaggerPath}/yaml`,
     });
-
-    console.log(
-      `📚 Swagger documentation is available at: http://localhost:${configService.get<number>('PORT', 3000)}/${swaggerPath}`,
-    );
-    console.log(
-      `� OpenAPI JSON: http://localhost:${configService.get<number>('PORT', 3000)}/${swaggerPath}/json`,
-    );
-    console.log(
-      `� OpenAPI YAML: http://localhost:${configService.get<number>('PORT', 3000)}/${swaggerPath}/yaml`,
-    );
   }
 
   const port = configService.get<number>('PORT', 3000);
@@ -155,6 +138,12 @@ async function bootstrap() {
   console.log(
     `🚀 Application is running on: http://localhost:${port}/${apiPrefix}`,
   );
+
+  if (swaggerEnabled) {
+    console.log(
+      `📚 Swagger documentation is available at: http://localhost:${port}/${swaggerPath}`,
+    );
+  }
 }
 
 bootstrap().catch((error) => {

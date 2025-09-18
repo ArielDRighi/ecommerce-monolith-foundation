@@ -15,6 +15,7 @@ import {
 import * as bcrypt from 'bcryptjs';
 
 import { AuthService } from './auth.service';
+import { TokenBlacklistService } from './token-blacklist.service';
 import { User, UserRole } from './entities/user.entity';
 import { RegisterDto, LoginDto } from './dto';
 
@@ -71,6 +72,7 @@ describe('AuthService', () => {
     save: jest.fn(),
     update: jest.fn(),
     count: jest.fn(),
+    find: jest.fn(),
   };
 
   const mockJwtMethods = {
@@ -80,6 +82,12 @@ describe('AuthService', () => {
 
   const mockConfigMethods = {
     get: jest.fn(),
+  };
+
+  const mockTokenBlacklistMethods = {
+    addToBlacklist: jest.fn().mockResolvedValue(undefined),
+    isTokenBlacklisted: jest.fn().mockResolvedValue(false),
+    cleanupExpiredTokens: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -97,6 +105,10 @@ describe('AuthService', () => {
         {
           provide: ConfigService,
           useValue: mockConfigMethods,
+        },
+        {
+          provide: TokenBlacklistService,
+          useValue: mockTokenBlacklistMethods,
         },
       ],
     }).compile();
@@ -540,6 +552,92 @@ describe('AuthService', () => {
       // Assert
       expect(userRepository.update).toHaveBeenCalledWith('test-user-id', {
         updatedAt: expect.any(Date),
+      });
+    });
+  });
+
+  describe('getAllUsers', () => {
+    it('should return paginated users', async () => {
+      const mockUsers = [
+        mockUser,
+        { ...mockUser, id: 'user-2', email: 'user2@example.com' } as User,
+      ];
+
+      userRepository.count.mockResolvedValue(2);
+      userRepository.find.mockResolvedValue(mockUsers);
+
+      const result = await service.getAllUsers({
+        page: 1,
+        limit: 20,
+      });
+
+      expect(result).toEqual({
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            id: mockUser.id,
+            email: mockUser.email,
+            firstName: mockUser.firstName,
+            lastName: mockUser.lastName,
+            role: mockUser.role,
+            isActive: mockUser.isActive,
+          }),
+        ]),
+        meta: {
+          total: 2,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
+        },
+      });
+
+      expect(userRepository.count).toHaveBeenCalled();
+      expect(userRepository.find).toHaveBeenCalledWith({
+        order: { createdAt: 'DESC' },
+        skip: 0,
+        take: 20,
+      });
+    });
+
+    it('should calculate correct pagination for multiple pages', async () => {
+      userRepository.count.mockResolvedValue(50);
+      userRepository.find.mockResolvedValue([mockUser]);
+
+      const result = await service.getAllUsers({
+        page: 3,
+        limit: 10,
+      });
+
+      expect(result.meta).toEqual({
+        total: 50,
+        page: 3,
+        limit: 10,
+        totalPages: 5,
+      });
+
+      expect(userRepository.find).toHaveBeenCalledWith({
+        order: { createdAt: 'DESC' },
+        skip: 20, // (page - 1) * limit = (3 - 1) * 10
+        take: 10,
+      });
+    });
+
+    it('should handle empty results', async () => {
+      userRepository.count.mockResolvedValue(0);
+      userRepository.find.mockResolvedValue([]);
+
+      const result = await service.getAllUsers({
+        page: 1,
+        limit: 20,
+      });
+
+      expect(result).toEqual({
+        data: [],
+        meta: {
+          total: 0,
+          page: 1,
+          limit: 20,
+          totalPages: 0,
+        },
       });
     });
   });

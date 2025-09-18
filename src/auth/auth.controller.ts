@@ -8,6 +8,8 @@ import {
   HttpStatus,
   Request,
   ValidationPipe,
+  Query,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +20,7 @@ import {
   ApiUnauthorizedResponse,
   ApiBadRequestResponse,
   ApiConflictResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
@@ -28,9 +31,9 @@ import {
   UserProfileDto,
   RefreshTokenDto,
 } from './dto';
-import { LocalAuthGuard, JwtAuthGuard } from './guards';
-import { CurrentUser } from './decorators';
-import { User } from './entities/user.entity';
+import { LocalAuthGuard, JwtAuthGuard, RolesGuard } from './guards';
+import { CurrentUser, Roles } from './decorators';
+import { User, UserRole } from './entities/user.entity';
 
 interface RequestWithUser {
   user: User;
@@ -75,9 +78,30 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'User login',
-    description: 'Authenticate user with email and password',
+    description:
+      'Authenticate user with email and password. Use admin@ecommerce.local / admin123 for admin access.',
   })
-  @ApiBody({ type: LoginDto })
+  @ApiBody({
+    type: LoginDto,
+    examples: {
+      admin: {
+        summary: 'Admin Login',
+        description: 'Use these credentials to test admin-only endpoints',
+        value: {
+          email: 'admin@ecommerce.local',
+          password: 'admin123',
+        },
+      },
+      customer: {
+        summary: 'Customer Login (if available)',
+        description: 'Example customer credentials',
+        value: {
+          email: 'customer@ecommerce.local',
+          password: 'customer123',
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'User successfully authenticated',
@@ -125,7 +149,7 @@ export class AuthController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: 'Get user profile',
     description: 'Retrieve current user profile information',
@@ -145,7 +169,7 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: 'User logout',
     description: 'Logout user (client should discard tokens)',
@@ -166,13 +190,90 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'Invalid or missing token',
   })
-  async logout(@CurrentUser() user: User): Promise<{ message: string }> {
-    // Update last login timestamp to current time for security tracking
-    await this.authService.updateLastLogin(user.id);
+  async logout(
+    @CurrentUser() user: User,
+    @Req() request: { headers?: { authorization?: string } },
+  ): Promise<{ message: string }> {
+    // Extract token from Authorization header
+    const authHeader = request.headers?.authorization;
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    if (token) {
+      await this.authService.logout(user.id, token);
+    }
 
     return {
       message: 'Successfully logged out',
     };
+  }
+
+  @Get('users')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Get all users (Admin only)',
+    description:
+      'Retrieve all users with pagination support. Only accessible by admin users.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (starts from 1)',
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of users per page (max 100)',
+    type: Number,
+    example: 20,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Users retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/UserProfileDto' },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            total: { type: 'number', example: 50 },
+            page: { type: 'number', example: 1 },
+            limit: { type: 'number', example: 20 },
+            totalPages: { type: 'number', example: 3 },
+          },
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized access',
+  })
+  async getAllUsers(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ): Promise<{
+    data: UserProfileDto[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
+    const pageNum = Math.max(1, page || 1);
+    const limitNum = Math.min(100, Math.max(1, limit || 20));
+
+    return this.authService.getAllUsers({
+      page: pageNum,
+      limit: limitNum,
+    });
   }
 
   /**

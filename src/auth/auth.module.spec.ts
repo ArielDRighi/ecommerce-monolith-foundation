@@ -2,8 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthModule } from './auth.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { TokenBlacklistService } from './token-blacklist.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
+import { BlacklistedToken } from './entities/blacklisted-token.entity';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
@@ -16,6 +18,21 @@ const mockUserRepository = {
   create: jest.fn(),
   delete: jest.fn(),
   update: jest.fn(),
+};
+
+// Mock BlacklistedToken repository
+const mockBlacklistedTokenRepository = {
+  find: jest.fn(),
+  findOne: jest.fn(),
+  save: jest.fn(),
+  create: jest.fn(),
+  delete: jest.fn(),
+  update: jest.fn(),
+  createQueryBuilder: jest.fn(() => ({
+    delete: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    execute: jest.fn(),
+  })),
 };
 
 // Mock JwtService
@@ -57,9 +74,14 @@ describe('AuthModule', () => {
       controllers: [AuthController],
       providers: [
         AuthService,
+        TokenBlacklistService,
         {
           provide: getRepositoryToken(User),
           useValue: mockUserRepository,
+        },
+        {
+          provide: getRepositoryToken(BlacklistedToken),
+          useValue: mockBlacklistedTokenRepository,
         },
         {
           provide: JwtService,

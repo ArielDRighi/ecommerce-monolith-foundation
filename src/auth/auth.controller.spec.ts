@@ -72,6 +72,7 @@ describe('AuthController', () => {
     getUserCount: jest.fn(),
     getProfile: jest.fn(),
     generateTokensForUser: jest.fn(),
+    getAllUsers: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -207,11 +208,20 @@ describe('AuthController', () => {
 
   describe('logout', () => {
     it('should logout successfully', async () => {
-      authService.updateLastLogin.mockResolvedValue(undefined);
+      authService.logout = jest.fn().mockResolvedValue(undefined);
 
-      const result = await controller.logout(mockUser);
+      const mockRequest = {
+        headers: {
+          authorization: 'Bearer mock.jwt.token',
+        },
+      };
 
-      expect(authService.updateLastLogin).toHaveBeenCalledWith(mockUser.id);
+      const result = await controller.logout(mockUser, mockRequest);
+
+      expect(authService.logout).toHaveBeenCalledWith(
+        mockUser.id,
+        'mock.jwt.token',
+      );
       expect(result).toEqual({ message: 'Successfully logged out' });
     });
   });
@@ -274,6 +284,91 @@ describe('AuthController', () => {
         message: 'Database connection failed: Unknown error',
         userCount: -1,
       });
+    });
+  });
+
+  describe('getAllUsers', () => {
+    it('should return paginated users for admin', async () => {
+      const mockUsersResult = {
+        data: [
+          {
+            id: '1',
+            email: 'user1@example.com',
+            firstName: 'User',
+            lastName: 'One',
+            role: UserRole.CUSTOMER,
+            isActive: true,
+          },
+          {
+            id: '2',
+            email: 'user2@example.com',
+            firstName: 'User',
+            lastName: 'Two',
+            role: UserRole.ADMIN,
+            isActive: true,
+          },
+        ] as UserProfileDto[],
+        meta: {
+          total: 2,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
+        },
+      };
+
+      authService.getAllUsers.mockResolvedValue(mockUsersResult);
+
+      const result = await controller.getAllUsers(1, 20);
+
+      expect(authService.getAllUsers).toHaveBeenCalledWith({
+        page: 1,
+        limit: 20,
+      });
+      expect(result).toBe(mockUsersResult);
+    });
+
+    it('should enforce minimum page and maximum limit constraints', async () => {
+      const mockUsersResult = {
+        data: [],
+        meta: {
+          total: 0,
+          page: 1,
+          limit: 100,
+          totalPages: 0,
+        },
+      };
+
+      authService.getAllUsers.mockResolvedValue(mockUsersResult);
+
+      const result = await controller.getAllUsers(0, 150);
+
+      expect(authService.getAllUsers).toHaveBeenCalledWith({
+        page: 1, // minimum page is 1
+        limit: 100, // maximum limit is 100
+      });
+      expect(result).toBe(mockUsersResult);
+    });
+
+    it('should use default values when no parameters provided', async () => {
+      const mockUsersResult = {
+        data: [],
+        meta: {
+          total: 0,
+          page: 1,
+          limit: 20,
+          totalPages: 0,
+        },
+      };
+
+      authService.getAllUsers.mockResolvedValue(mockUsersResult);
+
+      const result = await controller.getAllUsers();
+
+      expect(authService.getAllUsers).toHaveBeenCalledWith({
+        page: 1,
+        limit: 20,
+      });
+      expect(result).toBe(mockUsersResult);
     });
   });
 });

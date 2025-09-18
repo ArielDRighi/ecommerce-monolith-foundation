@@ -1243,4 +1243,122 @@ describe('ProductsService', () => {
       });
     });
   });
+
+  describe('getAllProducts', () => {
+    it('should return paginated products without filters', async () => {
+      const mockProducts = [mockProduct];
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getCount: jest.fn().mockResolvedValue(1),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockProducts),
+      };
+
+      jest
+        .spyOn(productRepository, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.getAllProducts({
+        page: 1,
+        limit: 20,
+      });
+
+      expect(result).toEqual({
+        data: [expect.any(Object)],
+        total: 1,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      });
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'product.deletedAt IS NULL',
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'product.isActive = true',
+      );
+    });
+
+    it('should return paginated products with category filter', async () => {
+      const mockProducts = [mockProduct];
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getCount: jest.fn().mockResolvedValue(1),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockProducts),
+      };
+
+      jest
+        .spyOn(productRepository, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.getAllProducts({
+        page: 1,
+        limit: 20,
+        category: 'electronics',
+      });
+
+      expect(result).toEqual({
+        data: [expect.any(Object)],
+        total: 1,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'category.slug = :categorySlug',
+        { categorySlug: 'electronics' },
+      );
+    });
+
+    it('should return paginated products with price filters', async () => {
+      const mockProducts = [mockProduct];
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getCount: jest.fn().mockResolvedValue(1),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockProducts),
+      };
+
+      jest
+        .spyOn(productRepository, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.getAllProducts({
+        page: 2,
+        limit: 10,
+        minPrice: 50,
+        maxPrice: 500,
+      });
+
+      expect(result).toEqual({
+        data: [expect.any(Object)],
+        total: 1,
+        page: 2,
+        limit: 10,
+        totalPages: 1,
+      });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'product.price >= :minPrice',
+        { minPrice: 50 },
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'product.price <= :maxPrice',
+        { maxPrice: 500 },
+      );
+      expect(mockQueryBuilder.skip).toHaveBeenCalledWith(10); // (page - 1) * limit
+      expect(mockQueryBuilder.take).toHaveBeenCalledWith(10);
+    });
+  });
 });
