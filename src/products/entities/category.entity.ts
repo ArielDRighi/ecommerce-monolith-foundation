@@ -2,8 +2,8 @@ import { Entity, Column, ManyToMany, Index } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
 
 @Entity('categories')
-@Index(['slug'], { unique: true, where: '"deletedAt" IS NULL' })
-@Index(['name'], { where: '"isActive" = true' })
+@Index(['slug'], { unique: true, where: '"deleted_at" IS NULL' })
+@Index(['name'], { where: '"is_active" = true' })
 export class Category extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   name: string;

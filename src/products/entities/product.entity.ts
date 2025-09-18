@@ -13,10 +13,10 @@ import { Category } from './category.entity';
 
 @Entity('products')
 @Index('IDX_products_name_search', ['name'])
-@Index('IDX_products_price_date_active', ['price', 'createdAt'], {
+@Index('IDX_products_price_date_active', ['price', 'created_at'], {
   where: '"is_active" = true',
 })
-@Index('IDX_products_active_created', ['isActive', 'createdAt'], {
+@Index('IDX_products_active_created', ['is_active', 'created_at'], {
   where: '"is_active" = true',
 })
 export class Product extends BaseEntity {
