@@ -180,6 +180,27 @@ jobs:
       - name: 📥 Install Dependencies
         run: npm ci
 
+      - name: �️ Install Database Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client redis-tools
+
+      - name: �🗄️ Wait for Services
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "PostgreSQL is unavailable - sleeping"
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+          
+          echo "Waiting for Redis to be ready..."
+          until redis-cli -h localhost -p 6379 ping; do
+            echo "Redis is unavailable - sleeping"
+            sleep 2
+          done
+          echo "Redis is ready!"
+
       - name: 🗄️ Setup Test Database
         run: |
           npm run migration:run
@@ -194,6 +215,7 @@ jobs:
 
       - name: 🎯 Run E2E Tests
         run: npm run test:e2e
+        timeout-minutes: 10
         env:
           NODE_ENV: test
           DATABASE_HOST: localhost
@@ -205,6 +227,16 @@ jobs:
           REDIS_PORT: 6379
           JWT_SECRET: ${{ env.JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ env.JWT_REFRESH_SECRET }}
+          JWT_ACCESS_EXPIRATION: 15m
+          JWT_REFRESH_EXPIRATION: 7d
+          BCRYPT_SALT_ROUNDS: 12
+          PORT: 3000
+          API_PREFIX: api/v1
+          CORS_ORIGIN: http://localhost:3000
+          RATE_LIMIT_TTL: 60
+          RATE_LIMIT_LIMIT: 100
+          LOG_LEVEL: error
+          SERVICE_NAME: ecommerce-monolith
 
       - name: 📋 Upload E2E Test Results
         uses: actions/upload-artifact@v4
