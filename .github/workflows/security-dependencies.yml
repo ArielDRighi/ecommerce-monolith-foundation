@@ -1,0 +1,157 @@
+name: 🔒 Security & Dependencies
+
+on:
+  schedule:
+    # Run every Monday at 09:00 UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  # 🔍 Dependency Vulnerability Scan
+  dependency-scan:
+    name: 🔍 Dependency Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 🔄 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📥 Install Dependencies
+        run: npm ci
+
+      - name: 🔍 NPM Audit (Critical & High)
+        run: |
+          echo "## 🔍 NPM Audit Results" >> $GITHUB_STEP_SUMMARY
+          npm audit --audit-level=high --json > audit-results.json || true
+
+          # Parse and display results
+          if [ -s audit-results.json ]; then
+            HIGH_VULNS=$(cat audit-results.json | jq '.metadata.vulnerabilities.high // 0')
+            CRITICAL_VULNS=$(cat audit-results.json | jq '.metadata.vulnerabilities.critical // 0')
+            
+            echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| 🔴 Critical | $CRITICAL_VULNS |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟠 High | $HIGH_VULNS |" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "$CRITICAL_VULNS" -gt 0 ] || [ "$HIGH_VULNS" -gt 0 ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "⚠️ **Action Required:** Critical or High severity vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          else
+            echo "✅ No vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 📋 Upload Audit Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-audit-results
+          path: audit-results.json
+          retention-days: 30
+
+  # 📦 License Compliance Check
+  license-check:
+    name: 📦 License Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 🔄 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📥 Install License Checker
+        run: npm install -g license-checker
+
+      - name: 📥 Install Dependencies
+        run: npm ci
+
+      - name: 📦 Check Licenses
+        run: |
+          echo "## 📦 License Compliance Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Generate license report
+          license-checker --json --out licenses.json
+
+          # Check for problematic licenses
+          FORBIDDEN_LICENSES="GPL-2.0,GPL-3.0,AGPL-1.0,AGPL-3.0"
+
+          if license-checker --excludePrivatePackages --failOn "$FORBIDDEN_LICENSES"; then
+            echo "✅ **License Compliance:** All dependencies use approved licenses" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **License Violation:** Found dependencies with forbidden licenses" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Forbidden Licenses Found:**" >> $GITHUB_STEP_SUMMARY
+            license-checker --excludePrivatePackages --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC" --summary >> $GITHUB_STEP_SUMMARY || true
+            exit 1
+          fi
+
+      - name: 📋 Upload License Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-report
+          path: licenses.json
+          retention-days: 30
+
+  # 🤖 Dependabot Integration
+  dependabot-auto-merge:
+    name: 🤖 Auto-merge Dependabot PRs
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: 🔄 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🤖 Enable Auto-merge for Dependabot
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 📊 Security Summary
+  security-summary:
+    name: 📊 Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, license-check]
+    if: always()
+
+    steps:
+      - name: 📊 Security Summary Report
+        run: |
+          echo "## 🔒 Security & Compliance Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 Dependency Scan | ${{ needs.dependency-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 License Check | ${{ needs.license-check.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔒 Security Standards" >> $GITHUB_STEP_SUMMARY
+          echo "- **Vulnerability Tolerance:** Zero Critical/High" >> $GITHUB_STEP_SUMMARY
+          echo "- **License Policy:** MIT, Apache-2.0, BSD, ISC only" >> $GITHUB_STEP_SUMMARY
+          echo "- **Scan Frequency:** Weekly + on dependency changes" >> $GITHUB_STEP_SUMMARY
+
+      - name: ❌ Fail if Security Issues Found
+        if: needs.dependency-scan.result != 'success' || needs.license-check.result != 'success'
+        run: |
+          echo "❌ Security or compliance issues found!"
+          exit 1

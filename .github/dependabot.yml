@@ -1,0 +1,72 @@
+version: 2
+updates:
+  # Node.js dependencies
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 10
+    reviewers:
+      - 'ArielDRighi'
+    assignees:
+      - 'ArielDRighi'
+    commit-message:
+      prefix: '⬆️'
+      include: 'scope'
+    labels:
+      - 'dependencies'
+      - 'security'
+    # Auto-merge minor and patch updates for dev dependencies
+    groups:
+      development-dependencies:
+        dependency-type: 'development'
+        update-types:
+          - 'minor'
+          - 'patch'
+      production-dependencies:
+        dependency-type: 'production'
+        update-types:
+          - 'patch'
+
+  # Docker dependencies
+  - package-ecosystem: 'docker'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '10:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 5
+    reviewers:
+      - 'ArielDRighi'
+    assignees:
+      - 'ArielDRighi'
+    commit-message:
+      prefix: '🐳'
+      include: 'scope'
+    labels:
+      - 'docker'
+      - 'dependencies'
+
+  # GitHub Actions dependencies
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '11:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 5
+    reviewers:
+      - 'ArielDRighi'
+    assignees:
+      - 'ArielDRighi'
+    commit-message:
+      prefix: '🔧'
+      include: 'scope'
+    labels:
+      - 'github-actions'
+      - 'dependencies'
