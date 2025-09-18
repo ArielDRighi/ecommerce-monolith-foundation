@@ -134,10 +134,18 @@ async function bootstrap() {
         showCommonExtensions: true,
         tryItOutEnabled: true,
       },
+      jsonDocumentUrl: `${swaggerPath}/json`,
+      yamlDocumentUrl: `${swaggerPath}/yaml`,
     });
 
     console.log(
       `📚 Swagger documentation is available at: http://localhost:${configService.get<number>('PORT', 3000)}/${swaggerPath}`,
+    );
+    console.log(
+      `� OpenAPI JSON: http://localhost:${configService.get<number>('PORT', 3000)}/${swaggerPath}/json`,
+    );
+    console.log(
+      `� OpenAPI YAML: http://localhost:${configService.get<number>('PORT', 3000)}/${swaggerPath}/yaml`,
     );
   }
 
