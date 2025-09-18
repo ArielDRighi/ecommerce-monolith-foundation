@@ -101,7 +101,7 @@
     "@types/passport-local": "^1.0.38",
     "@types/pg": "^8.15.5",
     "@types/supertest": "^6.0.2",
-    "@types/uuid": "^10.0.0",
+    "@types/uuid": "^11.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
