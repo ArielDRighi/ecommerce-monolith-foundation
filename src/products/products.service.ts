@@ -515,7 +515,7 @@ export class ProductsService {
       case ProductSortBy.CREATED_AT:
       default:
         // Leverages idx_products_recent_active for recent products
-        queryBuilder.orderBy('product.created_at', sortOrder);
+        queryBuilder.orderBy('product.createdAt', sortOrder);
         break;
     }
 
@@ -759,7 +759,7 @@ export class ProductsService {
       .leftJoinAndSelect('product.categories', 'category')
       .where('product.deletedAt IS NULL')
       .andWhere('product.isActive = true')
-      .orderBy('product.created_at', 'DESC')
+      .orderBy('product.createdAt', 'DESC')
       .limit(Math.min(limit, 50))
       .getMany();
 
@@ -786,7 +786,7 @@ export class ProductsService {
       .where('product.deletedAt IS NULL')
       .andWhere('product.isActive = true')
       .andWhere('category.id = :categoryId', { categoryId })
-      .orderBy('product.created_at', 'DESC');
+      .orderBy('product.createdAt', 'DESC');
 
     // Get total count with optimized query
     const total = await this.productRepository

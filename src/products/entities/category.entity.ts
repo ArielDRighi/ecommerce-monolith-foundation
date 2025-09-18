@@ -14,10 +14,10 @@ export class Category extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: 'varchar', length: 500, nullable: true, name: 'image_url' })
   imageUrl?: string;
 
-  @Column({ type: 'integer', default: 0 })
+  @Column({ type: 'integer', default: 0, name: 'sort_order' })
   sortOrder: number;
 
   @Column({ type: 'json', nullable: true })
