@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, In, IsNull } from 'typeorm';
@@ -33,6 +34,8 @@ export interface PaginatedResult<T> {
 
 @Injectable()
 export class ProductsService {
+  private readonly logger = new Logger(ProductsService.name);
+
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
@@ -214,6 +217,17 @@ export class ProductsService {
 
   /**
    * Public search for products (without sensitive user data)
+   *
+   * This method is designed for unauthenticated/public access and differs from
+   * searchProducts() by:
+   * - Excluding sensitive user information (createdBy is sanitized)
+   * - Only returning active products (isActive = true)
+   * - Optimized for public consumption with data sanitization
+   * - Uses performance-optimized queries for better public API response times
+   *
+   * @param searchDto - Search criteria including filters, pagination, and sorting
+   * @returns Promise<PaginatedResult<ProductResponseDto>> - Sanitized product results
+   * @throws Error - When search operation fails
    */
   async searchProductsPublic(
     searchDto: ProductSearchDto,
@@ -275,7 +289,7 @@ export class ProductsService {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
-      console.error('Error in searchProductsPublic', {
+      this.logger.error('Error in searchProductsPublic', {
         error: errorMessage,
         stack: errorStack,
         searchDto,
@@ -341,9 +355,18 @@ export class ProductsService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      console.error('Error in searchProducts:', error);
+      this.logger.error('Error in searchProducts:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        searchDto,
+      });
 
-      // Return empty result instead of throwing error for graceful degradation
+      // For non-critical search failures, return empty result for graceful degradation
+      // Critical database errors should still propagate
+      if (error instanceof Error && error.message.includes('database')) {
+        throw error; // Re-throw critical database errors
+      }
+
       return {
         data: [],
         total: 0,

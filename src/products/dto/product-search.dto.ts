@@ -9,12 +9,10 @@ import {
   Min,
   Max,
   Length,
-  registerDecorator,
-  ValidationOptions,
-  ValidationArguments,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsValidPriceRange } from '../../common/validators';
 
 export enum ProductSortBy {
   NAME = 'name',
@@ -28,31 +26,6 @@ export enum ProductSortBy {
 export enum SortOrder {
   ASC = 'ASC',
   DESC = 'DESC',
-}
-
-// Custom validation decorator for price range
-function IsValidPriceRange(validationOptions?: ValidationOptions) {
-  return function (object: any, propertyName: string) {
-    registerDecorator({
-      name: 'isValidPriceRange',
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      target: object.constructor,
-      propertyName: propertyName,
-      options: validationOptions,
-      validator: {
-        validate(_value: any, args: ValidationArguments) {
-          const obj = args.object as ProductSearchDto;
-          if (obj.minPrice !== undefined && obj.maxPrice !== undefined) {
-            return obj.maxPrice >= obj.minPrice;
-          }
-          return true; // Valid if either is undefined
-        },
-        defaultMessage() {
-          return 'Maximum price must be greater than or equal to minimum price';
-        },
-      },
-    });
-  };
 }
 
 export class ProductSearchDto {
