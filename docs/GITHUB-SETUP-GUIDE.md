@@ -5,6 +5,7 @@
 ### 🌍 1. Configure GitHub Environments
 
 #### 1.1 Create Staging Environment
+
 1. Go to your repository: `https://github.com/ArielDRighi/ecommerce-monolith-foundation`
 2. Click on **Settings** tab
 3. In the left sidebar, click **Environments**
@@ -16,6 +17,7 @@
    - ✅ **Deployment branches**: Only deploy from `develop` branch
 
 #### 1.2 Create Production Environment
+
 1. Click **New environment** again
 2. Name: `production`
 3. Configure **Deployment protection rules**:
@@ -28,6 +30,7 @@
 Go to **Settings** → **Secrets and variables** → **Actions**
 
 #### 2.1 Environment Variables (Repository level)
+
 Click **New repository secret** for each:
 
 ```bash
@@ -63,6 +66,7 @@ DISCORD_WEBHOOK_URL=your-discord-webhook-url
 #### 2.2 Environment-Specific Secrets
 
 **For Staging Environment:**
+
 1. Go to **Environments** → **staging** → **Add secret**
 
 ```bash
@@ -72,6 +76,7 @@ STAGING_REDIS_PASSWORD=staging-redis-password
 ```
 
 **For Production Environment:**
+
 1. Go to **Environments** → **production** → **Add secret**
 
 ```bash
@@ -101,6 +106,7 @@ openssl rand -base64 16
 ### ⚙️ 4. Repository Settings
 
 #### 4.1 Branch Protection Rules
+
 1. Go to **Settings** → **Branches**
 2. Add rule for `main` branch:
    - ✅ **Require a pull request before merging**
@@ -116,6 +122,7 @@ openssl rand -base64 16
    - ✅ **Require branches to be up to date before merging**
 
 #### 4.2 Actions Permissions
+
 1. Go to **Settings** → **Actions** → **General**
 2. **Actions permissions**: Select "Allow all actions and reusable workflows"
 3. **Workflow permissions**: Select "Read and write permissions"
@@ -145,12 +152,14 @@ Once configured, you can:
 ### 🔍 7. Monitoring and Troubleshooting
 
 #### Common Issues:
+
 - **Environment not found**: Ensure environment names match exactly (`staging`, `production`)
 - **Secrets not accessible**: Check environment association and permissions
 - **Approval required**: Ensure reviewers are configured and available
 - **Branch restrictions**: Verify deployment branch settings
 
 #### Monitoring:
+
 - **Actions tab**: View pipeline execution and logs
 - **Environments tab**: Monitor deployment history and status
 - **Pull Requests**: Review automated checks and comments
