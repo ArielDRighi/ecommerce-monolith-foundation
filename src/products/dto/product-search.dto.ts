@@ -12,6 +12,7 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsValidPriceRange } from '../../common/validators';
 
 export enum ProductSortBy {
   NAME = 'name',
@@ -66,6 +67,7 @@ export class ProductSearchDto {
   @IsOptional()
   @IsNumber({}, { message: 'Maximum price must be a number' })
   @Min(0, { message: 'Maximum price cannot be negative' })
+  @IsValidPriceRange()
   @Transform(({ value }) => (value ? parseFloat(String(value)) : undefined))
   maxPrice?: number;
 

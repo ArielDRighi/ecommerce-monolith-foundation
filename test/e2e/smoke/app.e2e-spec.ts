@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
+import { AppModule } from '../../../src/app.module';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -19,6 +19,7 @@ describe('AppController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const response = await request(app.getHttpServer()).get('/');
     expect(response.status).toBe(200);
-    expect(response.text).toBe('Hello World!');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(JSON.parse(response.text).data).toBe('Hello World!');
   });
 });

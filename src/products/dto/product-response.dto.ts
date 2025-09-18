@@ -52,6 +52,36 @@ export class CategoryResponseDto {
   updatedAt: Date;
 }
 
+export class CreatedByUserDto {
+  @ApiProperty({
+    description: 'User unique identifier',
+    example: '550e8400-e29b-41d4-a716-446655440002',
+  })
+  @Expose()
+  id: string;
+
+  @ApiProperty({
+    description: 'User email',
+    example: 'admin@example.com',
+  })
+  @Expose()
+  email: string;
+
+  @ApiPropertyOptional({
+    description: 'User first name',
+    example: 'John',
+  })
+  @Expose()
+  firstName?: string;
+
+  @ApiPropertyOptional({
+    description: 'User last name',
+    example: 'Doe',
+  })
+  @Expose()
+  lastName?: string;
+}
+
 export class ProductResponseDto {
   @ApiProperty({
     description: 'Product unique identifier',
@@ -169,20 +199,11 @@ export class ProductResponseDto {
 
   @ApiProperty({
     description: 'User who created the product',
-    example: {
-      id: '550e8400-e29b-41d4-a716-446655440002',
-      email: 'admin@example.com',
-      firstName: 'John',
-      lastName: 'Doe',
-    },
+    type: CreatedByUserDto,
   })
   @Expose()
-  createdBy: {
-    id: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-  };
+  @Type(() => CreatedByUserDto)
+  createdBy: CreatedByUserDto;
 
   @ApiProperty({
     description: 'Creation timestamp',

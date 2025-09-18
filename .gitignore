@@ -158,3 +158,33 @@ node_modules
 test-*.js
 debug-*.js
 *-test.js
+
+# Temporary documentation and debug files
+*_EVALUATION_REPORT.md
+*_DEBUG.md
+*-debug.*
+*-temp.*
+*.tmp
+
+# Jest coverage and test artifacts
+coverage/
+.nyc_output/
+jest_*.json
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Application logs
+logs/
+*.log
+audit.json
+*-audit.json
+
+# Temporary directories
+tmp/
+temp/
+.temp/
+
+# Stryker mutation testing temporary files
+stryker-tmp/
+reports/

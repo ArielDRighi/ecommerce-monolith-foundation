@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, In, IsNull } from 'typeorm';
@@ -21,6 +22,7 @@ import {
   UpdateCategoryDto,
   CategoryResponseDto,
 } from './dto';
+import { CreatedByUserDto } from './dto/product-response.dto';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -32,6 +34,8 @@ export interface PaginatedResult<T> {
 
 @Injectable()
 export class ProductsService {
+  private readonly logger = new Logger(ProductsService.name);
+
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
@@ -211,58 +215,166 @@ export class ProductsService {
   // PUBLIC SEARCH METHODS
   // ==============================
 
+  /**
+   * Public search for products (without sensitive user data)
+   *
+   * This method is designed for unauthenticated/public access and differs from
+   * searchProducts() by:
+   * - Excluding sensitive user information (createdBy is sanitized)
+   * - Only returning active products (isActive = true)
+   * - Optimized for public consumption with data sanitization
+   * - Uses performance-optimized queries for better public API response times
+   *
+   * @param searchDto - Search criteria including filters, pagination, and sorting
+   * @returns Promise<PaginatedResult<ProductResponseDto>> - Sanitized product results
+   * @throws Error - When search operation fails
+   */
+  async searchProductsPublic(
+    searchDto: ProductSearchDto,
+  ): Promise<PaginatedResult<ProductResponseDto>> {
+    try {
+      const queryBuilder = this.productRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.categories', 'category')
+        // No incluir información del usuario creador en búsquedas públicas
+        .where('product.deletedAt IS NULL')
+        .andWhere('product.isActive = true');
+
+      // Apply filters with optimization hints
+      this.applySearchFilters(queryBuilder, searchDto);
+
+      // Apply sorting with index-aware logic
+      this.applySorting(queryBuilder, searchDto);
+
+      // Optimization: Use COUNT query with same filters but without joins for better performance
+      const countQueryBuilder = this.productRepository
+        .createQueryBuilder('product')
+        .where('product.deletedAt IS NULL')
+        .andWhere('product.isActive = true');
+
+      // Apply the same filters for counting (without relations)
+      this.applySearchFiltersForCount(countQueryBuilder, searchDto);
+
+      // Get total count using optimized query
+      const total = await countQueryBuilder.getCount();
+
+      // Apply pagination
+      const page = searchDto.page || 1;
+      const limit = Math.min(searchDto.limit || 20, 100); // Cap at 100 for performance
+      const skip = (page - 1) * limit;
+
+      queryBuilder.skip(skip).take(limit);
+
+      // Execute query
+      const products = await queryBuilder.getMany();
+
+      // Transform to DTOs with sanitized data
+      const productDtos = products.map((product) => {
+        const dto = plainToClass(ProductResponseDto, product, {
+          excludeExtraneousValues: true,
+        });
+        // Asegurar que no hay información del usuario
+        dto.createdBy = new CreatedByUserDto();
+        return dto;
+      });
+
+      return {
+        data: productDtos,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error('Error in searchProductsPublic', {
+        error: errorMessage,
+        stack: errorStack,
+        searchDto,
+      });
+      throw new Error('Failed to search products: ' + errorMessage);
+    }
+  }
+
+  /**
+   * Admin/authenticated search for products (with full user data)
+   */
   async searchProducts(
     searchDto: ProductSearchDto,
   ): Promise<PaginatedResult<ProductResponseDto>> {
-    const queryBuilder = this.productRepository
-      .createQueryBuilder('product')
-      .leftJoinAndSelect('product.categories', 'category')
-      .leftJoinAndSelect('product.createdBy', 'createdBy')
-      .where('product.deletedAt IS NULL')
-      .andWhere('product.isActive = true');
+    try {
+      const queryBuilder = this.productRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.categories', 'category')
+        .leftJoinAndSelect('product.createdBy', 'createdBy')
+        .where('product.deletedAt IS NULL')
+        .andWhere('product.isActive = true');
 
-    // Apply filters with optimization hints
-    this.applySearchFilters(queryBuilder, searchDto);
+      // Apply filters with optimization hints
+      this.applySearchFilters(queryBuilder, searchDto);
 
-    // Apply sorting with index-aware logic
-    this.applySorting(queryBuilder, searchDto);
+      // Apply sorting with index-aware logic
+      this.applySorting(queryBuilder, searchDto);
 
-    // Optimization: Use COUNT query with same filters but without joins for better performance
-    const countQueryBuilder = this.productRepository
-      .createQueryBuilder('product')
-      .where('product.deletedAt IS NULL')
-      .andWhere('product.isActive = true');
+      // Optimization: Use COUNT query with same filters but without joins for better performance
+      const countQueryBuilder = this.productRepository
+        .createQueryBuilder('product')
+        .where('product.deletedAt IS NULL')
+        .andWhere('product.isActive = true');
 
-    // Apply the same filters for counting (without relations)
-    this.applySearchFiltersForCount(countQueryBuilder, searchDto);
+      // Apply the same filters for counting (without relations)
+      this.applySearchFiltersForCount(countQueryBuilder, searchDto);
 
-    // Get total count using optimized query
-    const total = await countQueryBuilder.getCount();
+      // Get total count using optimized query
+      const total = await countQueryBuilder.getCount();
 
-    // Apply pagination
-    const page = searchDto.page || 1;
-    const limit = Math.min(searchDto.limit || 20, 100); // Cap at 100 for performance
-    const skip = (page - 1) * limit;
+      // Apply pagination
+      const page = searchDto.page || 1;
+      const limit = Math.min(searchDto.limit || 20, 100); // Cap at 100 for performance
+      const skip = (page - 1) * limit;
 
-    queryBuilder.skip(skip).take(limit);
+      queryBuilder.skip(skip).take(limit);
 
-    // Execute query
-    const products = await queryBuilder.getMany();
+      // Execute query
+      const products = await queryBuilder.getMany();
 
-    // Transform to DTOs
-    const productDtos = products.map((product) =>
-      plainToClass(ProductResponseDto, product, {
-        excludeExtraneousValues: true,
-      }),
-    );
+      // Transform to DTOs
+      const productDtos = products.map((product) =>
+        plainToClass(ProductResponseDto, product, {
+          excludeExtraneousValues: true,
+        }),
+      );
 
-    return {
-      data: productDtos,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+      return {
+        data: productDtos,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      this.logger.error('Error in searchProducts:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        searchDto,
+      });
+
+      // For non-critical search failures, return empty result for graceful degradation
+      // Critical database errors should still propagate
+      if (error instanceof Error && error.message.includes('database')) {
+        throw error; // Re-throw critical database errors
+      }
+
+      return {
+        data: [],
+        total: 0,
+        page: searchDto.page || 1,
+        limit: searchDto.limit || 20,
+        totalPages: 0,
+      };
+    }
   }
 
   private applySearchFilters(
@@ -683,7 +795,37 @@ export class ProductsService {
   }
 
   /**
-   * Optimized slug-based product lookup
+   * Get product by slug (public access - without sensitive user data)
+   */
+  async getProductBySlugPublic(slug: string): Promise<ProductResponseDto> {
+    const product = await this.productRepository.findOne({
+      where: { slug, deletedAt: IsNull(), isActive: true },
+      relations: ['categories'], // No incluir createdBy
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with slug '${slug}' not found`);
+    }
+
+    // Increment view count (fire and forget, atomic)
+    this.productRepository
+      .increment({ id: product.id }, 'viewCount', 1)
+      .catch(() => {
+        // Silent fail for view count increment
+      });
+
+    const dto = plainToClass(ProductResponseDto, product, {
+      excludeExtraneousValues: true,
+    });
+
+    // Asegurar que no hay información del usuario
+    dto.createdBy = new CreatedByUserDto();
+
+    return dto;
+  }
+
+  /**
+   * Optimized slug-based product lookup (admin/authenticated access - with full user data)
    * Leverages unique idx_products_slug_unique index
    */
   async getProductBySlug(slug: string): Promise<ProductResponseDto> {

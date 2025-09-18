@@ -25,6 +25,11 @@ export const SENSITIVE_FIELDS = [
   'secret',
   'key',
   'apiKey',
+  'creditCard',
+  'cardNumber',
+  'cvv',
+  'ssn',
+  'socialSecurityNumber',
 ] as const;
 
 export const SENSITIVE_HEADERS = [

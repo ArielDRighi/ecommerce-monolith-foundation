@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
+  UseInterceptors,
   ParseUUIDPipe,
   HttpStatus,
   HttpCode,
@@ -35,6 +36,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User, UserRole } from '../auth/entities/user.entity';
+import { DebugInterceptor } from '../common/interceptors/debug.interceptor';
 
 @ApiTags('Products')
 @Controller('products')
@@ -297,10 +299,11 @@ export class ProductsController {
   async getProductBySlug(
     @Param('slug') slug: string,
   ): Promise<ProductResponseDto> {
-    return this.productsService.getProductBySlug(slug);
+    return this.productsService.getProductBySlugPublic(slug);
   }
 
   @Get('search')
+  @UseInterceptors(DebugInterceptor)
   @ApiOperation({
     summary: 'Search products with filters and pagination',
     description:
@@ -401,7 +404,7 @@ export class ProductsController {
   async searchProducts(
     @Query() searchDto: ProductSearchDto,
   ): Promise<PaginatedResult<ProductResponseDto>> {
-    return this.productsService.searchProducts(searchDto);
+    return this.productsService.searchProductsPublic(searchDto);
   }
 
   @Get(':id')
