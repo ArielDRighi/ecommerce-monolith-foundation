@@ -5,9 +5,16 @@
 
 import * as dotenv from 'dotenv';
 import { join } from 'path';
+import { webcrypto } from 'crypto';
 
 // Cargar variables de entorno de test
 dotenv.config({ path: join(__dirname, '..', '.env.test') });
+
+// ⚠️ CRYPTO POLYFILL: Configurar crypto para TypeORM en tests
+// TypeORM necesita crypto.randomUUID() en Node.js
+if (typeof globalThis.crypto === 'undefined') {
+  globalThis.crypto = webcrypto as Crypto;
+}
 
 // Configurar timeout global para tests
 jest.setTimeout(60000);
