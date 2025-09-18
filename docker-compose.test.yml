@@ -1,0 +1,106 @@
+version: '3.8'
+
+# 🧪 Docker Compose - Testing Environment
+# Usage: docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+
+services:
+  # 🗄️ PostgreSQL Database (Testing)
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: ecommerce-postgres-test
+    environment:
+      POSTGRES_DB: ecommerce_catalog_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --lc-collate=C --lc-ctype=C'
+    tmpfs:
+      - /var/lib/postgresql/data
+    networks:
+      - ecommerce-test-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d ecommerce_catalog_test']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  # 🔄 Redis Cache (Testing)
+  redis-test:
+    image: redis:7-alpine
+    container_name: ecommerce-redis-test
+    command: redis-server --save ""
+    tmpfs:
+      - /data
+    networks:
+      - ecommerce-test-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # 🧪 Application Tests
+  app-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    container_name: ecommerce-app-test
+    environment:
+      NODE_ENV: test
+      DATABASE_HOST: postgres-test
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ecommerce_catalog_test
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres123
+      REDIS_HOST: redis-test
+      REDIS_PORT: 6379
+      JWT_SECRET: test-jwt-secret
+      JWT_REFRESH_SECRET: test-refresh-secret
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./coverage:/app/coverage
+    networks:
+      - ecommerce-test-network
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    command: |
+      sh -c "
+        echo '🔄 Running migrations...'
+        npm run migration:run
+        echo '🌱 Seeding test data...'
+        npm run seed
+        echo '🧪 Running unit tests...'
+        npm run test:cov
+        echo '🎯 Running E2E tests...'
+        npm run test:e2e
+        echo '✅ All tests completed!'
+      "
+
+  # 📊 Test Results Collector
+  test-results:
+    image: alpine:latest
+    container_name: ecommerce-test-results
+    volumes:
+      - ./coverage:/coverage
+      - ./test/results:/test-results
+    networks:
+      - ecommerce-test-network
+    depends_on:
+      - app-test
+    command: |
+      sh -c "
+        echo '📊 Collecting test results...'
+        ls -la /coverage/
+        ls -la /test-results/
+        echo '✅ Test results collected successfully!'
+      "
+
+networks:
+  ecommerce-test-network:
+    driver: bridge
+    name: ecommerce_test_network

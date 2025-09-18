@@ -5,9 +5,16 @@
 
 import * as dotenv from 'dotenv';
 import { join } from 'path';
+import { webcrypto } from 'crypto';
 
 // Cargar variables de entorno de test
 dotenv.config({ path: join(__dirname, '..', '.env.test') });
+
+// ⚠️ CRYPTO POLYFILL: Configurar crypto para TypeORM en tests
+// TypeORM necesita crypto.randomUUID() en Node.js
+if (typeof globalThis.crypto === 'undefined') {
+  globalThis.crypto = webcrypto as Crypto;
+}
 
 // Configurar timeout global para tests
 jest.setTimeout(60000);
@@ -28,14 +35,6 @@ afterAll(() => {
   console.error = originalConsoleError;
   console.warn = originalConsoleWarn;
 });
-
-// Configuración de base de datos para E2E tests
-process.env.NODE_ENV = 'test';
-process.env.DATABASE_HOST = '127.0.0.1';
-process.env.DATABASE_PORT = '5433';
-process.env.DATABASE_USER = 'postgres';
-process.env.DATABASE_PASSWORD = 'password';
-process.env.DATABASE_NAME = 'ecommerce_catalog_test';
 
 // JWT Configuration para tests
 process.env.JWT_ACCESS_SECRET = 'test-jwt-access-secret-key-2024';

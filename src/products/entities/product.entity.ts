@@ -14,10 +14,10 @@ import { Category } from './category.entity';
 @Entity('products')
 @Index('IDX_products_name_search', ['name'])
 @Index('IDX_products_price_date_active', ['price', 'createdAt'], {
-  where: '"isActive" = true',
+  where: '"is_active" = true',
 })
 @Index('IDX_products_active_created', ['isActive', 'createdAt'], {
-  where: '"isActive" = true',
+  where: '"is_active" = true',
 })
 export class Product extends BaseEntity {
   @Column({ type: 'varchar', length: 500 })
@@ -56,13 +56,13 @@ export class Product extends BaseEntity {
   @Column({ type: 'decimal', precision: 3, scale: 2, nullable: true })
   rating?: number;
 
-  @Column({ type: 'integer', default: 0 })
+  @Column({ type: 'integer', default: 0, name: 'review_count' })
   reviewCount: number;
 
-  @Column({ type: 'integer', default: 0 })
+  @Column({ type: 'integer', default: 0, name: 'view_count' })
   viewCount: number;
 
-  @Column({ type: 'integer', default: 0 })
+  @Column({ type: 'integer', default: 0, name: 'order_count' })
   orderCount: number;
 
   // Relations

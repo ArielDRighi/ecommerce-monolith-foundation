@@ -185,10 +185,15 @@ describe('AnalyticsController', () => {
       mockProductsService.searchProducts.mockResolvedValue(mockSearchResult);
 
       // Mock performance.now to simulate fast execution (< 50ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1025); // 25ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkSearch('test');
 
@@ -201,10 +206,15 @@ describe('AnalyticsController', () => {
       mockProductsService.searchProducts.mockResolvedValue(mockSearchResult);
 
       // Mock performance.now to simulate medium execution (75ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1075); // 75ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkSearch('test');
 
@@ -217,10 +227,15 @@ describe('AnalyticsController', () => {
       mockProductsService.searchProducts.mockResolvedValue(mockSearchResult);
 
       // Mock performance.now to simulate slow execution (150ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1150); // 150ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkSearch('test');
 
@@ -278,10 +293,15 @@ describe('AnalyticsController', () => {
       );
 
       // Mock performance.now to simulate very fast execution (< 30ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1020); // 20ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkPopular();
 
@@ -296,10 +316,15 @@ describe('AnalyticsController', () => {
       );
 
       // Mock performance.now to simulate medium execution (45ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1045); // 45ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkPopular();
 
@@ -314,10 +339,15 @@ describe('AnalyticsController', () => {
       );
 
       // Mock performance.now to simulate slow execution (80ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1080); // 80ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkPopular();
 
@@ -373,10 +403,15 @@ describe('AnalyticsController', () => {
       );
 
       // Mock performance.now to simulate very fast execution (< 25ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1015); // 15ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkRecent();
 
@@ -391,10 +426,15 @@ describe('AnalyticsController', () => {
       );
 
       // Mock performance.now to simulate medium execution (35ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1035); // 35ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkRecent();
 
@@ -409,10 +449,15 @@ describe('AnalyticsController', () => {
       );
 
       // Mock performance.now to simulate slow execution (70ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1070); // 70ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkRecent();
 
@@ -480,10 +525,15 @@ describe('AnalyticsController', () => {
       );
 
       // Mock performance.now to simulate very fast execution (< 40ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1025); // 25ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkCategory('1');
 
@@ -503,10 +553,15 @@ describe('AnalyticsController', () => {
       );
 
       // Mock performance.now to simulate medium execution (60ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1060); // 60ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkCategory('1');
 
@@ -526,10 +581,15 @@ describe('AnalyticsController', () => {
       );
 
       // Mock performance.now to simulate slow execution (100ms)
-      jest
-        .spyOn(performance, 'now')
+      const mockPerformanceNow = jest
+        .fn()
         .mockReturnValueOnce(1000)
         .mockReturnValueOnce(1100); // 100ms difference
+
+      Object.defineProperty(performance, 'now', {
+        value: mockPerformanceNow,
+        writable: true,
+      });
 
       const result = await controller.benchmarkCategory('1');
 

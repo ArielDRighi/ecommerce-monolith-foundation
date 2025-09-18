@@ -15,7 +15,7 @@ export default new DataSource({
   migrations: [join(__dirname, '..', 'database', 'migrations', '*{.ts,.js}')],
   subscribers: [join(__dirname, '..', 'database', 'subscribers', '*{.ts,.js}')],
   logging: process.env.NODE_ENV === 'development',
-  synchronize: false, // Always false for migrations
+  synchronize: process.env.NODE_ENV === 'test' || process.env.CI === 'true', // Enable sync for testing
   migrationsRun: false,
   migrationsTableName: 'migrations',
 });
