@@ -3,6 +3,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthService } from '../auth.service';
+import { TokenBlacklistService } from '../token-blacklist.service';
 import { ConfigService } from '@nestjs/config';
 import { User, UserRole } from '../entities/user.entity';
 import { UnauthorizedException } from '@nestjs/common';
@@ -43,6 +44,10 @@ describe('JwtStrategy', () => {
     get: jest.fn(),
   };
 
+  const mockTokenBlacklistService = {
+    isTokenBlacklisted: jest.fn().mockResolvedValue(false),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -50,6 +55,10 @@ describe('JwtStrategy', () => {
         {
           provide: AuthService,
           useValue: mockAuthService,
+        },
+        {
+          provide: TokenBlacklistService,
+          useValue: mockTokenBlacklistService,
         },
         {
           provide: ConfigService,
@@ -78,6 +87,7 @@ describe('JwtStrategy', () => {
       sub: '1',
       email: 'test@example.com',
       role: UserRole.CUSTOMER,
+      jti: 'test-jti-id',
     };
 
     it('should return user when validation succeeds', async () => {
@@ -108,7 +118,12 @@ describe('JwtStrategy', () => {
     });
 
     it('should handle invalid payload', async () => {
-      const invalidPayload = { sub: '', email: '', role: UserRole.CUSTOMER };
+      const invalidPayload = {
+        sub: '',
+        email: '',
+        role: UserRole.CUSTOMER,
+        jti: 'invalid-jti',
+      };
       authService.validateUserById.mockResolvedValue(null);
 
       await expect(strategy.validate(invalidPayload)).rejects.toThrow(

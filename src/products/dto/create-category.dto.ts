@@ -50,14 +50,18 @@ export class CreateCategoryDto {
     description: 'Whether the category is active and visible',
     example: true,
     default: true,
+    type: 'boolean',
   })
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
     if (typeof value === 'string') {
-      return value.toLowerCase() === 'true';
+      const val = value.trim().toLowerCase();
+      return val === 'true' || val === '1';
     }
-    return Boolean(value);
+    return false;
   })
   isActive?: boolean = true;
 }

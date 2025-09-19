@@ -4,24 +4,30 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
+import { v4 as uuidv4 } from 'uuid';
 
 import { User, UserRole } from './entities/user.entity';
 import { RegisterDto, LoginDto, AuthResponseDto, UserProfileDto } from './dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { TokenBlacklistService } from './token-blacklist.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly tokenBlacklistService: TokenBlacklistService,
   ) {}
 
   /**
@@ -202,10 +208,22 @@ export class AuthService {
     expires_in: number;
     token_type: string;
   }> {
-    const payload = {
+    // Generate unique JWT IDs for token tracking
+    const accessTokenJti = uuidv4();
+    const refreshTokenJti = uuidv4();
+
+    const accessPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
+      jti: accessTokenJti,
+    };
+
+    const refreshPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      jti: refreshTokenJti,
     };
 
     const accessTokenExpiration = this.configService.get<string>(
@@ -218,11 +236,11 @@ export class AuthService {
     );
 
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
+      this.jwtService.signAsync(accessPayload, {
         secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
         expiresIn: accessTokenExpiration,
       }),
-      this.jwtService.signAsync(payload, {
+      this.jwtService.signAsync(refreshPayload, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
         expiresIn: refreshTokenExpiration,
       }),
@@ -286,6 +304,43 @@ export class AuthService {
     await this.userRepository.update(userId, {
       updatedAt: new Date(),
     });
+  }
+
+  /**
+   * Logout user by adding token to blacklist
+   */
+  async logout(userId: string, token: string): Promise<void> {
+    try {
+      // Decode the token to get JTI and expiration
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const decodedToken = this.jwtService.decode(token);
+
+      // Check if decoded payload has required fields
+      if (decodedToken && typeof decodedToken === 'object') {
+        const { jti, exp } = decodedToken as { jti?: string; exp?: number };
+
+        if (jti && exp) {
+          const expirationDate = new Date(exp * 1000); // Convert from seconds to milliseconds
+
+          // Add access token to blacklist
+          await this.tokenBlacklistService.addToBlacklist(
+            jti,
+            userId,
+            'access',
+            expirationDate,
+          );
+        }
+      }
+    } catch (error) {
+      // If we can't decode the token, still update last login for tracking
+      this.logger.warn('Failed to decode token during logout', {
+        error: error instanceof Error ? error.message : String(error),
+        userId,
+      });
+    }
+
+    // Update last login timestamp for security tracking
+    await this.updateLastLogin(userId);
   }
 
   /**
@@ -409,6 +464,44 @@ export class AuthService {
     return {
       ...tokens,
       user: this.transformUserToProfile(user),
+    };
+  }
+
+  /**
+   * Get all users with pagination (Admin only)
+   */
+  async getAllUsers(options: { page: number; limit: number }): Promise<{
+    data: UserProfileDto[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
+    const { page, limit } = options;
+    const offset = (page - 1) * limit;
+
+    // Get total count
+    const totalCount = await this.userRepository.count();
+
+    // Get paginated users
+    const users = await this.userRepository.find({
+      order: { createdAt: 'DESC' },
+      skip: offset,
+      take: limit,
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      data: users.map((user) => this.transformUserToProfile(user)),
+      meta: {
+        total: totalCount,
+        page,
+        limit,
+        totalPages,
+      },
     };
   }
 

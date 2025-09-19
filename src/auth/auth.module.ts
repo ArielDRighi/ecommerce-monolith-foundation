@@ -6,13 +6,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { TokenBlacklistService } from './token-blacklist.service';
 import { User } from './entities/user.entity';
+import { BlacklistedToken } from './entities/blacklisted-token.entity';
 import { LocalStrategy, JwtStrategy } from './strategies';
 import { LocalAuthGuard, JwtAuthGuard, RolesGuard } from './guards';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, BlacklistedToken]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -30,6 +32,7 @@ import { LocalAuthGuard, JwtAuthGuard, RolesGuard } from './guards';
   controllers: [AuthController],
   providers: [
     AuthService,
+    TokenBlacklistService,
     LocalStrategy,
     JwtStrategy,
     LocalAuthGuard,

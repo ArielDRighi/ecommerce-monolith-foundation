@@ -50,7 +50,7 @@ export class ProductsController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: 'Create a new product',
     description: 'Creates a new product. Requires ADMIN role.',
@@ -86,7 +86,7 @@ export class ProductsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: 'Update a product',
     description: 'Updates an existing product. Requires ADMIN role.',
@@ -132,7 +132,7 @@ export class ProductsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete a product',
@@ -167,6 +167,85 @@ export class ProductsController {
   // ==============================
   // PUBLIC ENDPOINTS
   // ==============================
+
+  @Get()
+  @ApiOperation({
+    summary: 'Get all products with pagination',
+    description:
+      'Get all active products with optional filtering by category and price range. ' +
+      'Supports pagination and returns detailed product information.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (starts at 1)',
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of products per page (max 100)',
+    type: Number,
+    example: 20,
+  })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    description: 'Filter by category slug',
+    type: String,
+    example: 'electronics',
+  })
+  @ApiQuery({
+    name: 'minPrice',
+    required: false,
+    description: 'Minimum price filter',
+    type: Number,
+    example: 50,
+  })
+  @ApiQuery({
+    name: 'maxPrice',
+    required: false,
+    description: 'Maximum price filter',
+    type: Number,
+    example: 500,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Products retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/ProductResponseDto' },
+        },
+        total: { type: 'number', example: 150 },
+        page: { type: 'number', example: 1 },
+        limit: { type: 'number', example: 20 },
+        totalPages: { type: 'number', example: 8 },
+      },
+    },
+  })
+  async getAllProducts(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
+    @Query('category') category?: string,
+    @Query('minPrice') minPrice?: number,
+    @Query('maxPrice') maxPrice?: number,
+  ): Promise<PaginatedResult<ProductResponseDto>> {
+    // Ensure minimum values and maximum limits
+    const safePage = Math.max(1, page || 1);
+    const safeLimit = Math.min(100, Math.max(1, limit || 20));
+
+    return this.productsService.getAllProducts({
+      page: safePage,
+      limit: safeLimit,
+      category,
+      minPrice,
+      maxPrice,
+    });
+  }
 
   @Get('popular')
   @ApiOperation({
@@ -315,7 +394,7 @@ export class ProductsController {
     required: false,
     description: 'Search term for product name or description',
     type: String,
-    example: 'gaming laptop',
+    example: 'macbook',
   })
   @ApiQuery({
     name: 'categoryId',
@@ -329,14 +408,14 @@ export class ProductsController {
     required: false,
     description: 'Minimum price filter',
     type: Number,
-    example: 100,
+    example: 30,
   })
   @ApiQuery({
     name: 'maxPrice',
     required: false,
     description: 'Maximum price filter',
     type: Number,
-    example: 2000,
+    example: 3000,
   })
   @ApiQuery({
     name: 'inStock',
@@ -407,42 +486,56 @@ export class ProductsController {
     return this.productsService.searchProductsPublic(searchDto);
   }
 
-  @Get(':id')
+  // ==============================
+  // CATEGORY ENDPOINTS (PUBLIC & ADMIN)
+  // ==============================
+
+  @Get('categories')
   @ApiOperation({
-    summary: 'Get product by ID',
+    summary: 'Get all categories',
     description:
-      'Publicly accessible endpoint to get a specific product by its ID. ' +
-      'Increments view count automatically.',
+      'Publicly accessible endpoint to get all active categories, sorted by name.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Categories retrieved successfully',
+    type: [CategoryResponseDto],
+  })
+  async getAllCategories(): Promise<CategoryResponseDto[]> {
+    return this.productsService.getAllCategories();
+  }
+
+  @Get('categories/:id')
+  @ApiOperation({
+    summary: 'Get category by ID',
+    description:
+      'Publicly accessible endpoint to get a specific category by its ID.',
   })
   @ApiParam({
     name: 'id',
-    description: 'Product UUID',
+    description: 'Category UUID',
     type: 'string',
     format: 'uuid',
   })
   @ApiResponse({
     status: 200,
-    description: 'Product retrieved successfully',
-    type: ProductResponseDto,
+    description: 'Category retrieved successfully',
+    type: CategoryResponseDto,
   })
   @ApiResponse({
     status: 404,
-    description: 'Product not found or inactive',
+    description: 'Category not found or inactive',
   })
-  async getProductById(
+  async getCategoryById(
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ProductResponseDto> {
-    return this.productsService.getProductById(id);
+  ): Promise<CategoryResponseDto> {
+    return this.productsService.getCategoryById(id);
   }
-
-  // ==============================
-  // CATEGORY MANAGEMENT (ADMIN ONLY)
-  // ==============================
 
   @Post('categories')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: 'Create a new category',
     description: 'Creates a new product category. Requires ADMIN role.',
@@ -477,7 +570,7 @@ export class ProductsController {
   @Patch('categories/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: 'Update a category',
     description: 'Updates an existing category. Requires ADMIN role.',
@@ -523,7 +616,7 @@ export class ProductsController {
   @Delete('categories/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete a category',
@@ -560,45 +653,31 @@ export class ProductsController {
     return this.productsService.deleteCategory(id);
   }
 
-  @Get('categories')
+  @Get(':id')
   @ApiOperation({
-    summary: 'Get all categories',
+    summary: 'Get product by ID',
     description:
-      'Publicly accessible endpoint to get all active categories, sorted by name.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Categories retrieved successfully',
-    type: [CategoryResponseDto],
-  })
-  async getAllCategories(): Promise<CategoryResponseDto[]> {
-    return this.productsService.getAllCategories();
-  }
-
-  @Get('categories/:id')
-  @ApiOperation({
-    summary: 'Get category by ID',
-    description:
-      'Publicly accessible endpoint to get a specific category by its ID.',
+      'Publicly accessible endpoint to get a specific product by its ID. ' +
+      'Increments view count automatically.',
   })
   @ApiParam({
     name: 'id',
-    description: 'Category UUID',
+    description: 'Product UUID',
     type: 'string',
     format: 'uuid',
   })
   @ApiResponse({
     status: 200,
-    description: 'Category retrieved successfully',
-    type: CategoryResponseDto,
+    description: 'Product retrieved successfully',
+    type: ProductResponseDto,
   })
   @ApiResponse({
     status: 404,
-    description: 'Category not found or inactive',
+    description: 'Product not found or inactive',
   })
-  async getCategoryById(
+  async getProductById(
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<CategoryResponseDto> {
-    return this.productsService.getCategoryById(id);
+  ): Promise<ProductResponseDto> {
+    return this.productsService.getProductById(id);
   }
 }

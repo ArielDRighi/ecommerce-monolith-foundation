@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty } from 'class-validator';
 import { UserRole } from '../entities/user.entity';
 
 export class AuthResponseDto {
@@ -44,6 +45,8 @@ export class RefreshTokenDto {
     description: 'Refresh token for obtaining new access token',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
+  @IsNotEmpty({ message: 'Refresh token is required' })
+  @IsString({ message: 'Refresh token must be a string' })
   refresh_token: string;
 }
 
@@ -56,20 +59,20 @@ export class UserProfileDto {
 
   @ApiProperty({
     description: 'User email address',
-    example: 'juan.perez@example.com',
+    example: 'user@ecommerce.local',
   })
   email: string;
 
   @ApiProperty({
     description: 'User first name',
-    example: 'Juan',
+    example: 'John',
     required: false,
   })
   firstName?: string;
 
   @ApiProperty({
     description: 'User last name',
-    example: 'Pérez',
+    example: 'Doe',
     required: false,
   })
   lastName?: string;

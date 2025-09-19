@@ -70,7 +70,9 @@ describe('ProductsController', () => {
       getProductBySlug: jest.fn(),
       getProductBySlugPublic: jest.fn(),
       searchProducts: jest.fn(),
+      searchProductsPublic: jest.fn(),
       getProductById: jest.fn(),
+      getAllProducts: jest.fn(),
       createCategory: jest.fn(),
       updateCategory: jest.fn(),
       deleteCategory: jest.fn(),
@@ -145,9 +147,10 @@ describe('ProductsController', () => {
       it('should delete a product', async () => {
         service.deleteProduct.mockResolvedValue(undefined);
 
-        await controller.deleteProduct('product-id');
+        const result = await controller.deleteProduct('product-id');
 
         expect(service.deleteProduct).toHaveBeenCalledWith('product-id');
+        expect(result).toBeUndefined();
       });
     });
 
@@ -245,9 +248,151 @@ describe('ProductsController', () => {
       it('should delete a category', async () => {
         service.deleteCategory.mockResolvedValue(undefined);
 
-        await controller.deleteCategory('category-id');
+        const result = await controller.deleteCategory('category-id');
 
         expect(service.deleteCategory).toHaveBeenCalledWith('category-id');
+        expect(result).toBeUndefined();
+      });
+    });
+  });
+
+  describe('Public Endpoints', () => {
+    describe('getAllProducts', () => {
+      it('should return paginated products', async () => {
+        const mockPaginatedResult = {
+          data: [mockProductResponse],
+          total: 1,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
+        };
+        service.getAllProducts.mockResolvedValue(mockPaginatedResult);
+
+        const result = await controller.getAllProducts(1, 20);
+
+        expect(service.getAllProducts).toHaveBeenCalledWith({
+          page: 1,
+          limit: 20,
+          category: undefined,
+          minPrice: undefined,
+          maxPrice: undefined,
+        });
+        expect(result).toBe(mockPaginatedResult);
+      });
+
+      it('should return paginated products with filters', async () => {
+        const mockPaginatedResult = {
+          data: [mockProductResponse],
+          total: 1,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+        };
+        service.getAllProducts.mockResolvedValue(mockPaginatedResult);
+
+        const result = await controller.getAllProducts(
+          1,
+          10,
+          'electronics',
+          50,
+          500,
+        );
+
+        expect(service.getAllProducts).toHaveBeenCalledWith({
+          page: 1,
+          limit: 10,
+          category: 'electronics',
+          minPrice: 50,
+          maxPrice: 500,
+        });
+        expect(result).toBe(mockPaginatedResult);
+      });
+
+      it('should enforce maximum page and limit constraints', async () => {
+        const mockPaginatedResult = {
+          data: [mockProductResponse],
+          total: 1,
+          page: 1,
+          limit: 100,
+          totalPages: 1,
+        };
+        service.getAllProducts.mockResolvedValue(mockPaginatedResult);
+
+        const result = await controller.getAllProducts(0, 150);
+
+        expect(service.getAllProducts).toHaveBeenCalledWith({
+          page: 1, // minimum page is 1
+          limit: 100, // maximum limit is 100
+          category: undefined,
+          minPrice: undefined,
+          maxPrice: undefined,
+        });
+        expect(result).toBe(mockPaginatedResult);
+      });
+    });
+
+    describe('searchProducts', () => {
+      it('should return paginated products', async () => {
+        const mockPaginatedResult = {
+          data: [mockProductResponse],
+          total: 1,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
+        };
+        service.searchProductsPublic.mockResolvedValue(mockPaginatedResult);
+
+        const searchDto = {
+          page: 1,
+          limit: 20,
+        };
+        const result = await controller.searchProducts(searchDto);
+
+        expect(service.searchProductsPublic).toHaveBeenCalledWith(searchDto);
+        expect(result).toBe(mockPaginatedResult);
+      });
+
+      it('should return paginated products with filters', async () => {
+        const mockPaginatedResult = {
+          data: [mockProductResponse],
+          total: 1,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+        };
+        service.searchProductsPublic.mockResolvedValue(mockPaginatedResult);
+
+        const searchDto = {
+          page: 1,
+          limit: 10,
+          categoryId: 'electronics',
+          minPrice: 50,
+          maxPrice: 500,
+        };
+        const result = await controller.searchProducts(searchDto);
+
+        expect(service.searchProductsPublic).toHaveBeenCalledWith(searchDto);
+        expect(result).toBe(mockPaginatedResult);
+      });
+
+      it('should enforce maximum page and limit constraints', async () => {
+        const mockPaginatedResult = {
+          data: [mockProductResponse],
+          total: 1,
+          page: 1,
+          limit: 100,
+          totalPages: 1,
+        };
+        service.searchProductsPublic.mockResolvedValue(mockPaginatedResult);
+
+        const searchDto = {
+          page: 1, // minimum page is 1
+          limit: 100, // maximum limit is 100
+        };
+        const result = await controller.searchProducts(searchDto);
+
+        expect(service.searchProductsPublic).toHaveBeenCalledWith(searchDto);
+        expect(result).toBe(mockPaginatedResult);
       });
     });
   });

@@ -19,7 +19,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateProductDto {
   @ApiProperty({
     description: 'Product name',
-    example: 'Laptop Gaming ASUS ROG',
+    example: 'Gaming Laptop ASUS ROG Strix',
     minLength: 3,
     maxLength: 500,
   })
@@ -40,7 +40,7 @@ export class CreateProductDto {
 
   @ApiProperty({
     description: 'Product slug (URL-friendly name)',
-    example: 'laptop-gaming-asus-rog-2024',
+    example: 'gaming-laptop-asus-rog-strix',
     pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$',
   })
   @IsString()
@@ -77,7 +77,7 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({
     description: 'Product SKU (Stock Keeping Unit)',
-    example: 'ASUS-ROG-2024-001',
+    example: 'ASUS-001',
     maxLength: 10,
   })
   @IsOptional()
@@ -115,8 +115,13 @@ export class CreateProductDto {
   attributes?: Record<string, any>;
 
   @ApiProperty({
-    description: 'Array of category IDs to associate with the product',
-    example: ['550e8400-e29b-41d4-a716-446655440000'],
+    description:
+      'Array of category IDs to associate with the product. ' +
+      'Available categories: Electronics (902eaa28-87c4-4722-a7dd-dcbf8800aa31), ' +
+      'Clothing (c2443eb1-ed52-4538-853d-6915f2e8d547), ' +
+      'Books (03f6b39c-c286-4c05-a7ec-5d06427d5e71), ' +
+      'Home & Garden (bb62ab92-48c3-408c-a8bb-634f157e0eca)',
+    example: ['902eaa28-87c4-4722-a7dd-dcbf8800aa31'],
     type: [String],
   })
   @IsArray()

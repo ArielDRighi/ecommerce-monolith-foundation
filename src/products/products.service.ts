@@ -43,9 +43,7 @@ export class ProductsService {
     private readonly categoryRepository: Repository<Category>,
   ) {}
 
-  // ==============================
-  // PRODUCT CRUD METHODS (ADMIN ONLY)
-  // ==============================
+  // #region PRODUCT CRUD METHODS (ADMIN ONLY)
 
   async createProduct(
     createProductDto: CreateProductDto,
@@ -211,9 +209,7 @@ export class ProductsService {
     });
   }
 
-  // ==============================
-  // PUBLIC SEARCH METHODS
-  // ==============================
+  // #region PUBLIC SEARCH METHODS
 
   /**
    * Public search for products (without sensitive user data)
@@ -527,9 +523,7 @@ export class ProductsService {
     }
   }
 
-  // ==============================
-  // CATEGORY CRUD METHODS (ADMIN ONLY)
-  // ==============================
+  // #region CATEGORY CRUD METHODS (ADMIN ONLY)
 
   async createCategory(
     createCategoryDto: CreateCategoryDto,
@@ -646,9 +640,7 @@ export class ProductsService {
     });
   }
 
-  // ==============================
-  // OPTIMIZED PRIVATE METHODS
-  // ==============================
+  // #region OPTIMIZED PRIVATE METHODS
 
   /**
    * Optimized search filters for COUNT queries (without relations/joins)
@@ -724,6 +716,68 @@ export class ProductsService {
         },
       );
     }
+  }
+
+  // #region PUBLIC METHODS
+
+  /**
+   * Get all products with pagination and filtering
+   * High-performance endpoint with optimized query building
+   */
+  async getAllProducts(options: {
+    page: number;
+    limit: number;
+    category?: string;
+    minPrice?: number;
+    maxPrice?: number;
+  }): Promise<PaginatedResult<ProductResponseDto>> {
+    const { page, limit, category, minPrice, maxPrice } = options;
+    const offset = (page - 1) * limit;
+
+    const queryBuilder = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.categories', 'category')
+      .where('product.deletedAt IS NULL')
+      .andWhere('product.isActive = true');
+
+    // Category filter
+    if (category) {
+      queryBuilder.andWhere('category.slug = :categorySlug', {
+        categorySlug: category,
+      });
+    }
+
+    // Price filters
+    if (minPrice !== undefined) {
+      queryBuilder.andWhere('product.price >= :minPrice', { minPrice });
+    }
+    if (maxPrice !== undefined) {
+      queryBuilder.andWhere('product.price <= :maxPrice', { maxPrice });
+    }
+
+    // Get total count
+    const totalCount = await queryBuilder.getCount();
+
+    // Get paginated results
+    const products = await queryBuilder
+      .orderBy('product.createdAt', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getMany();
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      data: products.map((product) =>
+        plainToClass(ProductResponseDto, product, {
+          excludeExtraneousValues: true,
+        }),
+      ),
+      total: totalCount,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   /**
