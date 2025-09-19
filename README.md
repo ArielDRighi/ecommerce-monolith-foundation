@@ -52,7 +52,7 @@ Este proyecto no es solo código; es el resultado de un proceso de ingeniería d
 
 Este enfoque demuestra un compromiso con la planificación estratégica, la gestión de riesgos y la comunicación técnica clara, aplicando más de 10 años de experiencia en gestión de proyectos al desarrollo de software.
 
-➡️ **[Explora aquí los ADRs para entender el "porqué" detrás de cada decisión técnica.](https://github.com/arieldrighi/https://github.com/ArielDRighi/ecommerce-monolith-foundation.git/tree/main/docs/adr)**
+➡️ **[Explora aquí los ADRs para entender el "porqué" detrás de cada decisión técnica.](https://github.com/ArielDRighi/ecommerce-monolith-foundation/tree/develop/docs/adr)**
 
 ---
 
