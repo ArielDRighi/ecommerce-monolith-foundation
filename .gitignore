@@ -180,6 +180,13 @@ logs/
 audit.json
 *-audit.json
 
+# Security sensitive files
+secrets_backup.txt
+*secrets*.txt
+*backup*.txt
+.env.*
+!.env.example
+
 # Temporary directories
 tmp/
 temp/

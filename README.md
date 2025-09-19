@@ -44,6 +44,18 @@ El objetivo principal es demostrar la capacidad de construir sistemas de backend
 
 **🎯 Documentación Completa:** El proyecto incluye documentación técnica profesional que demuestra planificación previa, incluyendo diseño de base de datos, product backlog con metodología ágil, ADRs (Architecture Decision Records), y templates de GitHub para gestión de issues.
 
+---
+
+### 🏛️ Decisiones de Arquitectura y Diseño
+
+Este proyecto no es solo código; es el resultado de un proceso de ingeniería deliberado y documentado. Todas las decisiones arquitectónicas clave, desde la elección del monolito hasta la estrategia de testing, están registradas como **Architecture Decision Records (ADRs)**.
+
+Este enfoque demuestra un compromiso con la planificación estratégica, la gestión de riesgos y la comunicación técnica clara, aplicando más de 10 años de experiencia en gestión de proyectos al desarrollo de software.
+
+➡️ **[Explora aquí los ADRs para entender el "porqué" detrás de cada decisión técnica.](https://github.com/arieldrighi/https://github.com/ArielDRighi/ecommerce-monolith-foundation.git/tree/main/docs/adr)**
+
+---
+
 ### ✨ Características Principales
 
 - **Autenticación y Autorización Avanzada:** Registro de usuarios y login seguros con JWT (Access y Refresh tokens), sistema de blacklist de tokens para logout seguro, control de acceso basado en roles (Admin vs. Cliente) y protección de rutas mediante Guards.
