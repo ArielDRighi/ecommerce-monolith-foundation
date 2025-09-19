@@ -27,6 +27,7 @@ Cada ADR sigue esta estructura:
 | [ADR-006](./006-containerization-strategy.md)      | Estrategia de Containerización              | Aceptado | 2025-09-18 |
 | [ADR-007](./007-ci-cd-pipeline-architecture.md)    | CI/CD Pipeline Architecture                 | Aceptado | 2025-09-18 |
 | [ADR-008](./008-logging-monitoring-strategy.md)    | Logging and Monitoring Strategy             | Aceptado | 2025-09-18 |
+| [ADR-009](./009-database-design-architecture.md)   | Database Design and Schema Architecture     | Aceptado | 2025-09-18 |
 
 ## Cómo Leer los ADRs
 
