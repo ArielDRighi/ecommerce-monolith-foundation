@@ -364,10 +364,17 @@ La arquitectura de este proyecto se basa en **Architectural Decision Records (AD
 
 ### 📋 Principios de Arquitectura Aplicados
 
-- **Separation of Concerns**: Módulos claramente separados (Auth, Products, Analytics, Logging)
-- **SOLID Principles**: Aplicados en toda la codebase
-- **Clean Architecture**: Capas bien definidas con inversión de dependencias
-- **Enterprise Patterns**: Repository pattern, DTO pattern, Guard pattern
+- **Modular Architecture**: Arquitectura modular enterprise-ready con separación clara por dominio
+- **SOLID Principles**: Aplicados progresivamente (mejoras continuas en desarrollo)
+- **Repository Pattern**: TypeORM repositories con optimizaciones específicas de performance  
+- **Enterprise Patterns**: DTO pattern, Guard pattern, Interceptor pattern implementados
+
+### 🛠️ Mejoras Continuas en Progreso
+
+- **Service Separation**: Extracción de CategoriesService para cumplir SRP
+- **Dependency Inversion**: Interfaces de repository para mayor flexibilidad
+- **Query Optimization**: Value Objects para encapsular lógica compleja de consultas
+- **Architecture Evolution**: Preparación para patterns avanzados según crecimiento del proyecto
 
 ---
 
