@@ -43,9 +43,7 @@ export class ProductsService {
     private readonly categoryRepository: Repository<Category>,
   ) {}
 
-  // ==============================
-  // PRODUCT CRUD METHODS (ADMIN ONLY)
-  // ==============================
+  // #region PRODUCT CRUD METHODS (ADMIN ONLY)
 
   async createProduct(
     createProductDto: CreateProductDto,
@@ -211,9 +209,7 @@ export class ProductsService {
     });
   }
 
-  // ==============================
-  // PUBLIC SEARCH METHODS
-  // ==============================
+  // #region PUBLIC SEARCH METHODS
 
   /**
    * Public search for products (without sensitive user data)
@@ -527,9 +523,7 @@ export class ProductsService {
     }
   }
 
-  // ==============================
-  // CATEGORY CRUD METHODS (ADMIN ONLY)
-  // ==============================
+  // #region CATEGORY CRUD METHODS (ADMIN ONLY)
 
   async createCategory(
     createCategoryDto: CreateCategoryDto,
@@ -646,9 +640,7 @@ export class ProductsService {
     });
   }
 
-  // ==============================
-  // OPTIMIZED PRIVATE METHODS
-  // ==============================
+  // #region OPTIMIZED PRIVATE METHODS
 
   /**
    * Optimized search filters for COUNT queries (without relations/joins)
@@ -726,9 +718,7 @@ export class ProductsService {
     }
   }
 
-  // ==============================
-  // PUBLIC METHODS
-  // ==============================
+  // #region PUBLIC METHODS
 
   /**
    * Get all products with pagination and filtering

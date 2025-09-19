@@ -88,6 +88,6 @@ describe('LoggingModule', () => {
     instance.configure(mockConsumer as any);
 
     expect(mockConsumer.apply).toHaveBeenCalled();
-    expect(mockConsumer.forRoutes).toHaveBeenCalledWith('*path');
+    expect(mockConsumer.forRoutes).toHaveBeenCalledWith('*');
   });
 });

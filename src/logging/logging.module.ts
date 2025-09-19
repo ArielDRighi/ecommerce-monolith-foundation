@@ -42,6 +42,6 @@ import { HttpExceptionFilter } from './filters/http-exception.filter';
 })
 export class LoggingModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(CorrelationIdMiddleware).forRoutes('*path');
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
   }
 }

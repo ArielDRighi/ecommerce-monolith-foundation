@@ -364,7 +364,7 @@ export class ProductsController {
     name: 'slug',
     description: 'Product slug (URL-friendly identifier)',
     type: 'string',
-    example: 'macbook-pro-16',
+    example: 'gaming-laptop-pro-2024',
   })
   @ApiResponse({
     status: 200,

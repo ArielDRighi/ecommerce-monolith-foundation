@@ -4,6 +4,7 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,6 +20,8 @@ import { TokenBlacklistService } from './token-blacklist.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -330,7 +333,10 @@ export class AuthService {
       }
     } catch (error) {
       // If we can't decode the token, still update last login for tracking
-      console.warn('Failed to decode token during logout:', error);
+      this.logger.warn('Failed to decode token during logout', {
+        error: error instanceof Error ? error.message : String(error),
+        userId,
+      });
     }
 
     // Update last login timestamp for security tracking
