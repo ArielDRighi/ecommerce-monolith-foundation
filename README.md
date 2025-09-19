@@ -376,3 +376,5 @@ La arquitectura de este proyecto se basa en **Architectural Decision Records (AD
 **Ariel D'Righi** - arieldavidrighi@gmail.com
 
 **Enlace del Proyecto:** [https://github.com/ArielDRighi/ecommerce-monolith-foundation](https://github.com/ArielDRighi/ecommerce-monolith-foundation)
+
+<!-- CI/CD Test: Investigating pipeline failures -->
