@@ -28,9 +28,9 @@ describe('Authentication E2E', () => {
   });
 
   describe('/auth (Authentication)', () => {
-    const timestamp = Date.now();
+    const uniqueId = uuidv4().substring(0, 8);
     const testUser = {
-      email: `test-e2e-${timestamp}@example.com`,
+      email: `test-e2e-${uniqueId}@example.com`,
       password: 'TestPassword123!',
       firstName: 'Test',
       lastName: 'User',
