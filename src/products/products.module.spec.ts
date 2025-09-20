@@ -7,14 +7,15 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Category } from '../categories/entities/category.entity';
 
-// Mock TypeORM repositories
-const mockRepository = {
+// Mock repository interfaces
+const mockProductRepository = {
   find: jest.fn(),
   findOne: jest.fn(),
   save: jest.fn(),
   create: jest.fn(),
-  delete: jest.fn(),
-  update: jest.fn(),
+  softDelete: jest.fn().mockResolvedValue(undefined),
+  count: jest.fn(),
+  increment: jest.fn().mockResolvedValue(undefined),
   createQueryBuilder: jest.fn(() => ({
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
@@ -27,6 +28,15 @@ const mockRepository = {
   })),
 };
 
+const mockCategoryRepository = {
+  find: jest.fn(),
+  findOne: jest.fn(),
+  save: jest.fn(),
+  create: jest.fn(),
+  softDelete: jest.fn(),
+  count: jest.fn(),
+};
+
 describe('ProductsModule', () => {
   let module: TestingModule;
 
@@ -36,12 +46,16 @@ describe('ProductsModule', () => {
       providers: [
         ProductsService,
         {
+          provide: 'IProductRepository',
+          useValue: mockProductRepository,
+        },
+        {
           provide: getRepositoryToken(Product),
-          useValue: mockRepository,
+          useValue: mockProductRepository,
         },
         {
           provide: getRepositoryToken(Category),
-          useValue: mockRepository,
+          useValue: mockCategoryRepository,
         },
         {
           provide: CategoriesService,

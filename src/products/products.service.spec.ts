@@ -2,8 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 
 import { ProductsService } from './products.service';
@@ -11,6 +9,7 @@ import { Product } from './entities/product.entity';
 import { Category } from '../categories/entities/category.entity';
 import { CategoriesService } from '../categories/categories.service';
 import { User, UserRole } from '../auth/entities/user.entity';
+import { IProductRepository } from './interfaces/product-repository.interface';
 import type {
   CreateProductDto,
   UpdateProductDto,
@@ -19,7 +18,7 @@ import type {
 
 describe('ProductsService', () => {
   let service: ProductsService;
-  let productRepository: Repository<Product>;
+  let productRepository: IProductRepository;
   let categoriesService: CategoriesService;
 
   // Mock data
@@ -85,7 +84,7 @@ describe('ProductsService', () => {
       providers: [
         ProductsService,
         {
-          provide: getRepositoryToken(Product),
+          provide: 'IProductRepository',
           useValue: {
             create: jest.fn(),
             save: jest.fn(),
@@ -93,15 +92,9 @@ describe('ProductsService', () => {
             findOne: jest.fn(),
             softDelete: jest.fn(),
             createQueryBuilder: jest.fn(),
-            increment: jest.fn().mockResolvedValue({ affected: 1 }),
+            increment: jest.fn().mockResolvedValue(undefined),
             update: jest.fn(),
-          },
-        },
-        {
-          provide: getRepositoryToken(Category),
-          useValue: {
-            find: jest.fn(),
-            findOne: jest.fn(),
+            count: jest.fn(),
           },
         },
         {
@@ -119,9 +112,7 @@ describe('ProductsService', () => {
     }).compile();
 
     service = module.get<ProductsService>(ProductsService);
-    productRepository = module.get<Repository<Product>>(
-      getRepositoryToken(Product),
-    );
+    productRepository = module.get('IProductRepository');
     categoriesService = module.get<CategoriesService>(CategoriesService);
 
     // Clear all mocks after module setup
@@ -202,11 +193,7 @@ describe('ProductsService', () => {
   describe('deleteProduct', () => {
     it('should delete a product successfully', async () => {
       jest.spyOn(productRepository, 'findOne').mockResolvedValue(mockProduct);
-      jest.spyOn(productRepository, 'softDelete').mockResolvedValue({
-        affected: 1,
-        raw: {},
-        generatedMaps: [],
-      });
+      jest.spyOn(productRepository, 'softDelete').mockResolvedValue(undefined);
 
       await service.deleteProduct('prod-id-1');
 
@@ -227,7 +214,7 @@ describe('ProductsService', () => {
       jest.spyOn(productRepository, 'findOne').mockResolvedValue(mockProduct);
       const incrementSpy = jest
         .spyOn(productRepository, 'increment')
-        .mockResolvedValue({ affected: 1, raw: {}, generatedMaps: [] });
+        .mockResolvedValue(undefined);
 
       const result = await service.getProductBySlug('test-product');
 

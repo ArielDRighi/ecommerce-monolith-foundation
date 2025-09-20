@@ -4,9 +4,9 @@ import {
   BadRequestException,
   ConflictException,
   Logger,
+  Inject,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, In } from 'typeorm';
+import { IsNull, In } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { Category } from './entities/category.entity';
 import {
@@ -14,14 +14,15 @@ import {
   UpdateCategoryDto,
   CategoryResponseDto,
 } from './dto';
+import { ICategoryRepository } from './interfaces/category-repository.interface';
 
 @Injectable()
 export class CategoriesService {
   private readonly logger = new Logger(CategoriesService.name);
 
   constructor(
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
+    @Inject('ICategoryRepository')
+    private readonly categoryRepository: ICategoryRepository,
   ) {}
 
   // #region CATEGORY CRUD METHODS (ADMIN ONLY)

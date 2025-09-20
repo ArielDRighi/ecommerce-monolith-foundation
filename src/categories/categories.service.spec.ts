@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { IsNull } from 'typeorm';
 import { CategoriesService } from './categories.service';
-import { Category } from './entities/category.entity';
 import { Logger } from '@nestjs/common';
 
 describe('CategoriesService', () => {
@@ -24,7 +22,7 @@ describe('CategoriesService', () => {
       providers: [
         CategoriesService,
         {
-          provide: getRepositoryToken(Category),
+          provide: 'ICategoryRepository',
           useValue: mockCategoryRepository,
         },
         Logger,

@@ -3,9 +3,9 @@ import {
   NotFoundException,
   ConflictException,
   Logger,
+  Inject,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, IsNull } from 'typeorm';
+import { SelectQueryBuilder, IsNull } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { Product } from './entities/product.entity';
 import { User } from '../auth/entities/user.entity';
@@ -19,6 +19,7 @@ import {
 } from './dto';
 import { CreatedByUserDto } from './dto/product-response.dto';
 import { CategoriesService } from '../categories/categories.service';
+import { IProductRepository } from './interfaces/product-repository.interface';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -33,8 +34,8 @@ export class ProductsService {
   private readonly logger = new Logger(ProductsService.name);
 
   constructor(
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
+    @Inject('IProductRepository')
+    private readonly productRepository: IProductRepository,
     private readonly categoriesService: CategoriesService,
   ) {}
 

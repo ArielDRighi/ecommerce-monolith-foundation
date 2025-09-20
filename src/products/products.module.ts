@@ -4,6 +4,7 @@ import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { Product } from './entities/product.entity';
 import { CategoriesModule } from '../categories/categories.module';
+import { TypeOrmProductRepository } from './repositories/typeorm-product.repository';
 
 @Module({
   imports: [
@@ -11,7 +12,13 @@ import { CategoriesModule } from '../categories/categories.module';
     CategoriesModule, // Import to get CategoriesService
   ],
   controllers: [ProductsController],
-  providers: [ProductsService],
+  providers: [
+    ProductsService,
+    {
+      provide: 'IProductRepository',
+      useClass: TypeOrmProductRepository,
+    },
+  ],
   exports: [ProductsService], // Export service for use in other modules if needed
 })
 export class ProductsModule {}
