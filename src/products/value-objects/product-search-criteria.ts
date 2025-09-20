@@ -103,13 +103,19 @@ export class ProductSearchCriteria {
   }
 
   /**
-   * Apply category filter
+   * Apply category filter with clear precedence:
+   * 1. categoryId takes precedence if provided
+   * 2. categorySlug is used if categoryId is not provided
    */
   private applyCategoryFilter(queryBuilder: SelectQueryBuilder<Product>): void {
-    if (this.filters.categorySlug) {
-      queryBuilder.andWhere('category.slug = :categorySlug', {
-        categorySlug: this.filters.categorySlug,
-      });
+    const { categoryId, categorySlug } = this.filters;
+
+    if (categoryId !== undefined && categoryId !== null) {
+      // categoryId takes precedence
+      queryBuilder.andWhere('category.id = :categoryId', { categoryId });
+    } else if (categorySlug !== undefined && categorySlug !== null) {
+      // Use categorySlug if categoryId is not provided
+      queryBuilder.andWhere('category.slug = :categorySlug', { categorySlug });
     }
   }
 
@@ -251,7 +257,7 @@ export class ProductSearchCriteria {
    * Check if this search criteria requires joins (for optimization)
    */
   requiresJoins(): boolean {
-    return !!this.filters.categorySlug;
+    return !!(this.filters.categoryId || this.filters.categorySlug);
   }
 
   /**
@@ -260,6 +266,7 @@ export class ProductSearchCriteria {
   getCacheKey(): string {
     const keyParams = {
       search: this.filters.search,
+      categoryId: this.filters.categoryId,
       categorySlug: this.filters.categorySlug,
       minPrice: this.filters.minPrice,
       maxPrice: this.filters.maxPrice,

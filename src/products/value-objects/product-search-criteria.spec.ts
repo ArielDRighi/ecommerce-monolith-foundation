@@ -78,6 +78,68 @@ describe('ProductSearchCriteria', () => {
       );
     });
 
+    it('should apply category filter when categoryId is provided', () => {
+      const categoryId = '902eaa28-87c4-4722-a7dd-dcbf8800aa31';
+      const searchDto: ProductSearchDto = { categoryId };
+      const criteria = new ProductSearchCriteria(searchDto);
+
+      criteria.buildQueryBuilder(mockQueryBuilder);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'category.id = :categoryId',
+        { categoryId },
+      );
+    });
+
+    it('should prioritize categoryId over categorySlug when both are provided', () => {
+      const categoryId = '902eaa28-87c4-4722-a7dd-dcbf8800aa31';
+      const categorySlug = 'electronics';
+      const searchDto: ProductSearchDto = { categoryId, categorySlug };
+      const criteria = new ProductSearchCriteria(searchDto);
+
+      criteria.buildQueryBuilder(mockQueryBuilder);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'category.id = :categoryId',
+        { categoryId },
+      );
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
+        'category.slug = :categorySlug',
+        expect.any(Object),
+      );
+    });
+
+    it('should apply category filter when categoryId is provided', () => {
+      const categoryId = '902eaa28-87c4-4722-a7dd-dcbf8800aa31';
+      const searchDto: ProductSearchDto = { categoryId };
+      const criteria = new ProductSearchCriteria(searchDto);
+
+      criteria.buildQueryBuilder(mockQueryBuilder);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'category.id = :categoryId',
+        { categoryId },
+      );
+    });
+
+    it('should prioritize categoryId over categorySlug when both are provided', () => {
+      const categoryId = '902eaa28-87c4-4722-a7dd-dcbf8800aa31';
+      const categorySlug = 'electronics';
+      const searchDto: ProductSearchDto = { categoryId, categorySlug };
+      const criteria = new ProductSearchCriteria(searchDto);
+
+      criteria.buildQueryBuilder(mockQueryBuilder);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'category.id = :categoryId',
+        { categoryId },
+      );
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
+        'category.slug = :categorySlug',
+        expect.any(Object),
+      );
+    });
+
     it('should apply price range filter when both min and max prices are provided', () => {
       const searchDto: ProductSearchDto = { minPrice: 100, maxPrice: 500 };
       const criteria = new ProductSearchCriteria(searchDto);
@@ -263,6 +325,15 @@ describe('ProductSearchCriteria', () => {
     it('should return true when category filter is present', () => {
       const searchDto: ProductSearchDto = {
         categorySlug: 'electronics',
+      };
+      const criteria = new ProductSearchCriteria(searchDto);
+
+      expect(criteria.requiresJoins()).toBe(true);
+    });
+
+    it('should return true when categoryId filter is present', () => {
+      const searchDto: ProductSearchDto = {
+        categoryId: '902eaa28-87c4-4722-a7dd-dcbf8800aa31',
       };
       const criteria = new ProductSearchCriteria(searchDto);
 

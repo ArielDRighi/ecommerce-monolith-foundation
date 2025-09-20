@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../../src/app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 
 describe('Authentication E2E', () => {
   let app: INestApplication;
@@ -55,9 +56,10 @@ describe('Authentication E2E', () => {
     });
 
     it('/api/v1/auth/register (POST) - should fail with duplicate email', async () => {
-      // Create a unique user for this test to avoid conflicts
+      // Create a unique user for this test to avoid conflicts with parallel execution
+      const uniqueId = uuidv4().substring(0, 8); // Use first 8 chars of UUID for readability
       const duplicateTestUser = {
-        email: `duplicate-test-${Date.now()}@example.com`,
+        email: `duplicate-test-${uniqueId}@example.com`,
         password: 'TestPassword123!',
         firstName: 'Duplicate',
         lastName: 'Test',

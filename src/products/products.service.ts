@@ -243,7 +243,7 @@ export class ProductsService {
 
         // Sanitize user data for public access
         if (!includeUserData) {
-          dto.createdBy = {} as CreatedByUserDto;
+          dto.createdBy = this.createSanitizedUserDto();
         }
 
         return dto;
@@ -543,6 +543,18 @@ export class ProductsService {
       `All ${categoryIds.length} categories validated successfully`,
     );
     return categories;
+  }
+
+  /**
+   * Create a sanitized user DTO for public endpoints
+   */
+  private createSanitizedUserDto(): CreatedByUserDto {
+    return {
+      id: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+    };
   }
 
   // #endregion
