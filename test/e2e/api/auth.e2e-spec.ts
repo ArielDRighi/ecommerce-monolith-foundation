@@ -55,10 +55,26 @@ describe('Authentication E2E', () => {
     });
 
     it('/api/v1/auth/register (POST) - should fail with duplicate email', async () => {
+      // Create a unique user for this test to avoid conflicts
+      const duplicateTestUser = {
+        email: `duplicate-test-${Date.now()}@example.com`,
+        password: 'TestPassword123!',
+        firstName: 'Duplicate',
+        lastName: 'Test',
+      };
+
+      // First, register a user successfully
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       await request(app.getHttpServer())
         .post('/api/v1/auth/register')
-        .send(testUser)
+        .send(duplicateTestUser)
+        .expect(201);
+
+      // Then, try to register the same user again - should fail with 409
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(duplicateTestUser)
         .expect(409);
     });
 

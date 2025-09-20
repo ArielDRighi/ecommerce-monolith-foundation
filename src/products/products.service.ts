@@ -243,7 +243,7 @@ export class ProductsService {
 
         // Sanitize user data for public access
         if (!includeUserData) {
-          dto.createdBy = new CreatedByUserDto();
+          dto.createdBy = {} as CreatedByUserDto;
         }
 
         return dto;
@@ -495,7 +495,7 @@ export class ProductsService {
 
     // Sanitize user data for public access
     if (!includeUserData) {
-      dto.createdBy = new CreatedByUserDto();
+      dto.createdBy = {} as CreatedByUserDto;
     }
 
     return dto;

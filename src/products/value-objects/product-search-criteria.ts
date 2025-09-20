@@ -63,10 +63,8 @@ export class ProductSearchCriteria {
     queryBuilder: SelectQueryBuilder<Product>,
     includeUserData: boolean = true,
   ): void {
-    // Join categories if category filter is present
-    if (this.filters.categoryId) {
-      queryBuilder.leftJoinAndSelect('product.categories', 'category');
-    }
+    // Always join categories to ensure they're included in response
+    queryBuilder.leftJoinAndSelect('product.categories', 'category');
 
     // Join user data if requested (for admin views)
     if (includeUserData) {

@@ -20,6 +20,8 @@ describe('Contract Testing - API Contracts & Data Schemas', () => {
   let adminUser: User;
   let adminToken: string;
   let customerToken: string;
+  let testCategoryId: string;
+  let testProductId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -43,7 +45,24 @@ describe('Contract Testing - API Contracts & Data Schemas', () => {
 
     // Setup authentication tokens
     await setupAuthentication();
+
+    // Create test category for products
+    await setupTestCategory();
   });
+
+  async function setupTestCategory() {
+    const categoryResponse = await request(app.getHttpServer())
+      .post('/api/v1/categories')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        name: 'Contract Test Category',
+        slug: 'contract-test-category',
+        description: 'Category for contract testing',
+      })
+      .expect(201);
+
+    testCategoryId = categoryResponse.body.data.id;
+  }
 
   async function setupAuthentication() {
     // Create admin user through service (defaults to CUSTOMER)
@@ -318,24 +337,6 @@ describe('Contract Testing - API Contracts & Data Schemas', () => {
   });
 
   describe('Products API Contracts', () => {
-    let testCategoryId: string;
-    let testProductId: string;
-
-    beforeAll(async () => {
-      // Create test category
-      const categoryResponse = await request(app.getHttpServer())
-        .post('/api/v1/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          name: 'Contract Test Category',
-          slug: 'contract-test-category',
-          description: 'Category for contract testing',
-        })
-        .expect(201);
-
-      testCategoryId = categoryResponse.body.data.id;
-    });
-
     describe('POST /products', () => {
       it('should have correct request/response contract for product creation', async () => {
         const productPayload = {
@@ -527,8 +528,11 @@ describe('Contract Testing - API Contracts & Data Schemas', () => {
             orderCount: expect.any(Number),
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
-            categories: expect.any(Array),
           });
+
+          // Validate categories field exists (can be empty array)
+          expect(response.body.data[0]).toHaveProperty('categories');
+          expect(Array.isArray(response.body.data[0].categories)).toBe(true);
 
           // Validate price is within requested range
           expect(response.body.data[0].price).toBeGreaterThanOrEqual(100);
@@ -727,7 +731,7 @@ describe('Contract Testing - API Contracts & Data Schemas', () => {
         },
         {
           method: 'GET',
-          path: '/api/v1/products/categories/123e4567-e89b-12d3-a456-426614174000',
+          path: '/api/v1/categories/123e4567-e89b-12d3-a456-426614174000',
           expectedStatus: 404,
         },
       ];
@@ -805,7 +809,7 @@ describe('Contract Testing - API Contracts & Data Schemas', () => {
   describe('Data Type Validation Contracts', () => {
     it('should enforce strict data types in request/response', async () => {
       const categoryResponse = await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Type Validation Category',

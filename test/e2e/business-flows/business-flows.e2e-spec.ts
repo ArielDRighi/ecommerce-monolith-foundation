@@ -83,7 +83,7 @@ describe('Business Flows E2E', () => {
       };
 
       const categoryResponse = await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${adminToken}`)
         .send(categoryData)
         .expect(201);
@@ -265,7 +265,7 @@ describe('Business Flows E2E', () => {
 
       // 4. CUSTOMER CANNOT CREATE CATEGORIES
       await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${customerToken}`)
         .send({
           name: 'Unauthorized Category',
@@ -353,7 +353,7 @@ describe('Business Flows E2E', () => {
       };
 
       const categoryResponse = await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${adminTestToken}`)
         .send(categoryData)
         .expect(201);

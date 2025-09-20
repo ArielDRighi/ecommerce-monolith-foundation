@@ -229,7 +229,7 @@ describe('Advanced Business Flows E2E', () => {
       };
 
       const categoryResponse = await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${adminToken}`)
         .send(categoryData)
         .expect(201);
@@ -290,7 +290,7 @@ describe('Advanced Business Flows E2E', () => {
       };
 
       const categoryResponse = await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${adminToken}`)
         .send(categoryData)
         .expect(201);
@@ -464,7 +464,7 @@ describe('Advanced Business Flows E2E', () => {
     it('should prevent privilege escalation attempts', async () => {
       // Customer trying to create admin-only resources
       await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${customerToken}`)
         .send({
           name: 'Hacker Category',

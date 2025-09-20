@@ -409,7 +409,7 @@ export class ProductsController {
   async getProductBySlug(
     @Param('slug') slug: string,
   ): Promise<ProductResponseDto> {
-    return this.productsService.getProductBySlug(slug);
+    return this.productsService.getProductBySlugPublic(slug);
   }
 
   @Get('search')
