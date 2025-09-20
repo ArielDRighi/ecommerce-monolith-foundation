@@ -9,7 +9,7 @@ import { AppModule } from '../../../src/app.module';
 import { DataSource } from 'typeorm';
 import { User, UserRole } from '../../../src/auth/entities/user.entity';
 import { Product } from '../../../src/products/entities/product.entity';
-import { Category } from '../../../src/products/entities/category.entity';
+import { Category } from '../../../src/categories/entities/category.entity';
 
 describe('Business Flows E2E', () => {
   let app: INestApplication;
@@ -83,7 +83,7 @@ describe('Business Flows E2E', () => {
       };
 
       const categoryResponse = await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${adminToken}`)
         .send(categoryData)
         .expect(201);
@@ -265,7 +265,7 @@ describe('Business Flows E2E', () => {
 
       // 4. CUSTOMER CANNOT CREATE CATEGORIES
       await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${customerToken}`)
         .send({
           name: 'Unauthorized Category',
@@ -353,7 +353,7 @@ describe('Business Flows E2E', () => {
       };
 
       const categoryResponse = await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${adminTestToken}`)
         .send(categoryData)
         .expect(201);

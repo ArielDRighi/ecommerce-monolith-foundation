@@ -2,18 +2,20 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProductsModule } from './products.module';
 import { ProductsController } from './products.controller';
 import { ProductsService } from './products.service';
+import { DI_TOKENS } from '../common/tokens/di-tokens';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { Category } from './entities/category.entity';
+import { Category } from '../categories/entities/category.entity';
 
-// Mock TypeORM repositories
-const mockRepository = {
+// Mock repository interfaces
+const mockProductRepository = {
   find: jest.fn(),
   findOne: jest.fn(),
   save: jest.fn(),
   create: jest.fn(),
-  delete: jest.fn(),
-  update: jest.fn(),
+  softDelete: jest.fn().mockResolvedValue(undefined),
+  count: jest.fn(),
+  increment: jest.fn().mockResolvedValue(undefined),
   createQueryBuilder: jest.fn(() => ({
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
@@ -26,6 +28,15 @@ const mockRepository = {
   })),
 };
 
+const mockCategoryRepository = {
+  find: jest.fn(),
+  findOne: jest.fn(),
+  save: jest.fn(),
+  create: jest.fn(),
+  softDelete: jest.fn(),
+  count: jest.fn(),
+};
+
 describe('ProductsModule', () => {
   let module: TestingModule;
 
@@ -35,12 +46,20 @@ describe('ProductsModule', () => {
       providers: [
         ProductsService,
         {
+          provide: DI_TOKENS.IProductRepository,
+          useValue: mockProductRepository,
+        },
+        {
+          provide: DI_TOKENS.ICategoryRepository,
+          useValue: mockCategoryRepository,
+        },
+        {
           provide: getRepositoryToken(Product),
-          useValue: mockRepository,
+          useValue: mockProductRepository,
         },
         {
           provide: getRepositoryToken(Category),
-          useValue: mockRepository,
+          useValue: mockCategoryRepository,
         },
       ],
     }).compile();

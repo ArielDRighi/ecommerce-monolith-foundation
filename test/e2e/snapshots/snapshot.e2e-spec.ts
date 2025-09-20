@@ -94,7 +94,7 @@ describe('Snapshot Testing E2E - API Response Validation', () => {
 
     // Create test category
     const categoryResponse = await request(app.getHttpServer())
-      .post('/api/v1/products/categories')
+      .post('/api/v1/categories')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         name: 'Snapshot Electronics',
@@ -314,7 +314,7 @@ describe('Snapshot Testing E2E - API Response Validation', () => {
   describe('Category Response Snapshots', () => {
     it('should match category creation response structure snapshot', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Snapshot Category',
@@ -330,7 +330,7 @@ describe('Snapshot Testing E2E - API Response Validation', () => {
 
     it('should match category details response structure snapshot', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/api/v1/products/categories/${testCategory.id}`)
+        .get(`/api/v1/categories/${testCategory.id}`)
         .expect(200);
 
       const sanitizedResponse = sanitizeResponseForSnapshot(response);
@@ -339,7 +339,7 @@ describe('Snapshot Testing E2E - API Response Validation', () => {
 
     it('should match category update response structure snapshot', async () => {
       const response = await request(app.getHttpServer())
-        .patch(`/api/v1/products/categories/${testCategory.id}`)
+        .patch(`/api/v1/categories/${testCategory.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Updated Snapshot Electronics',

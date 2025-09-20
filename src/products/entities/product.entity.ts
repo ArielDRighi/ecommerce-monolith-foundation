@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
 import { User } from '../../auth/entities/user.entity';
-import { Category } from './category.entity';
+import { Category } from '../../categories/entities/category.entity';
 
 @Entity('products')
 @Index('IDX_products_name_search', ['name'])

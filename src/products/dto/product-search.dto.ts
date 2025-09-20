@@ -42,9 +42,20 @@ export class ProductSearchDto {
 
   @ApiPropertyOptional({
     description:
+      'Category slug to filter products (e.g., "electronics", "clothing"). ' +
+      'Note: If both categoryId and categorySlug are provided, categoryId takes precedence.',
+    example: 'electronics',
+  })
+  @IsOptional()
+  @IsString()
+  categorySlug?: string;
+
+  @ApiPropertyOptional({
+    description:
       'Category ID to filter products. ' +
       'Available: Electronics (902eaa28-87c4-4722-a7dd-dcbf8800aa31), ' +
-      'Clothing (c2443eb1-ed52-4538-853d-6915f2e8d547)',
+      'Clothing (c2443eb1-ed52-4538-853d-6915f2e8d547). ' +
+      'Note: Takes precedence over categorySlug when both are provided.',
     example: '902eaa28-87c4-4722-a7dd-dcbf8800aa31',
   })
   @IsOptional()

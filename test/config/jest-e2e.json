@@ -18,6 +18,8 @@
   "maxWorkers": 1,
   "forceExit": true,
   "detectOpenHandles": true,
+  "silent": false,
+  "verbose": false,
 
   "collectCoverageFrom": [
     "src/**/*.ts",

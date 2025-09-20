@@ -5,16 +5,16 @@
     <img src="https://img.shields.io/github/actions/workflow/status/ArielDRighi/ecommerce-monolith-foundation/ci-cd-pipeline.yml?branch=main&style=for-the-badge" alt="CI/CD Status"/>
   </a>
   <a href="#">
-    <img src="https://img.shields.io/badge/tests-482%20unit%20%2B%2089%20e2e-brightgreen?style=for-the-badge" alt="Test Coverage"/>
+    <img src="https://img.shields.io/badge/tests-425%20unit%20%2B%2089%20e2e-brightgreen?style=for-the-badge" alt="Test Coverage"/>
   </a>
   <a href="#">
-    <img src="https://img.shields.io/badge/coverage-95%25-brightgreen?style=for-the-badge" alt="Code Coverage"/>
+    <img src="https://img.shields.io/badge/coverage-74.69%25-brightgreen?style=for-the-badge" alt="Code Coverage"/>
   </a>
   <a href="#">
-    <img src="https://img.shields.io/badge/performance-87%25%20improved-blue?style=for-the-badge" alt="Performance"/>
+    <img src="https://img.shields.io/badge/performance-85%25%20improved-blue?style=for-the-badge" alt="Performance"/>
   </a>
   <a href="#">
-    <img src="https://img.shields.io/badge/database-29%20indexes-orange?style=for-the-badge" alt="Database Optimization"/>
+    <img src="https://img.shields.io/badge/database-34%20indexes-orange?style=for-the-badge" alt="Database Optimization"/>
   </a>
 </p>
 
@@ -59,12 +59,12 @@ Este enfoque demuestra un compromiso con la planificación estratégica, la gest
 ### ✨ Características Principales
 
 - **Autenticación y Autorización Avanzada:** Registro de usuarios y login seguros con JWT (Access y Refresh tokens), sistema de blacklist de tokens para logout seguro, control de acceso basado en roles (Admin vs. Cliente) y protección de rutas mediante Guards.
-- **Gestión Completa de Productos y Categorías:** Operaciones CRUD completas para productos y categorías con validación avanzada, disponibles exclusivamente para administradores.
-- **Catálogo Público Optimizado:** Endpoints públicos para buscar y listar productos con filtrado avanzado, paginación, ordenamiento y búsqueda full-text de alto rendimiento.
-- **Sistema de Analytics en Tiempo Real:** Dashboard de analytics con métricas de performance, contadores de productos, usuarios y categorías.
-- **Optimización de Base de Datos Empresarial:** 29 índices estratégicos de base de datos, nomenclatura snake_case optimizada, y consultas de alto rendimiento incluso con grandes volúmenes de datos.
+- **Gestión Completa de Productos y Categorías:** Operaciones CRUD completas para productos y categorías con validación avanzada, disponibles exclusivamente para administradores. Módulos separados y optimizados.
+- **Catálogo Público Optimizado:** Endpoints públicos para buscar y listar productos con filtrado avanzado, paginación, ordenamiento y búsqueda full-text de alto rendimiento. Datos sanitizados para seguridad.
+- **Sistema de Analytics en Tiempo Real:** Dashboard de analytics con métricas de performance, benchmarks en tiempo real, y análisis de optimización de base de datos.
+- **Optimización de Base de Datos Empresarial:** 34 índices estratégicos de base de datos, nomenclatura snake_case optimizada, y consultas de alto rendimiento incluso con grandes volúmenes de datos.
 - **Logging Profesional Estructurado:** Sistema de logging de extremo a extremo con IDs de correlación, interceptors de request/response, y filtros de excepción globales para facilitar el seguimiento y debugging.
-- **Sistema de Testing Exhaustivo:** 482 pruebas unitarias, 89 pruebas E2E, cobertura >95%, y testing de mutación para garantizar calidad de código.
+- **Sistema de Testing Exhaustivo:** 425 tests unitarios + 89 tests E2E, cobertura 74.69%, y configuración Jest corregida para garantizar calidad de código.
 - **Contenerización y DevOps:** Aplicación completamente contenerizada con Docker multi-stage builds, docker-compose para múltiples entornos (dev, test, prod).
 - **Pipeline CI/CD Empresarial:** Pipeline automatizado con GitHub Actions, quality gates, escaneo de seguridad, y despliegue multi-ambiente.
 - **Documentación API Completa:** Documentación Swagger/OpenAPI con ejemplos reales de base de datos y esquemas detallados.
@@ -205,39 +205,47 @@ La documentación de la API se genera automáticamente con **Swagger** y está d
 
 #### Categorías
 
-- `GET /products/categories`: Lista todas las categorías (público)
-- `GET /products/categories/:id`: Obtiene categoría específica (público)
-- `POST /products/categories`: Crea nueva categoría (solo Admin)
-- `PATCH /products/categories/:id`: Actualiza categoría (solo Admin)
-- `DELETE /products/categories/:id`: Elimina categoría (solo Admin)
+- `GET /categories`: Lista todas las categorías (público)
+- `GET /categories/:id`: Obtiene categoría específica (público)
+- `POST /categories`: Crea nueva categoría (solo Admin)
+- `PATCH /categories/:id`: Actualiza categoría (solo Admin)
+- `DELETE /categories/:id`: Elimina categoría (solo Admin)
 
 #### Analytics
 
 - `GET /analytics/dashboard`: Dashboard con métricas del sistema
+- `GET /analytics/optimization-results`: Resultados de optimización de BD
+- `GET /analytics/benchmark/search`: Benchmark de búsqueda en tiempo real
+- `GET /analytics/benchmark/popular`: Benchmark de productos populares
+- `GET /analytics/benchmark/recent`: Benchmark de productos recientes
+- `GET /analytics/benchmark/category`: Benchmark por categoría
+- `GET /analytics/system-info`: Información de arquitectura del sistema
 
 Para ver la lista completa de endpoints y probarlos, visita la documentación de Swagger.
+
+**📋 Guía Completa de Testing:** Consulta [API_TESTING_GUIDE.md](./docs/API_TESTING_GUIDE.md) para ejemplos detallados de curl con todos los 23+ endpoints probados y verificados.
 
 ---
 
 ## ✅ Testing
 
-El proyecto cuenta con una suite de pruebas empresarial con **>95% de cobertura de código** y **482 pruebas unitarias + 89 pruebas E2E**.
+El proyecto cuenta con una suite de pruebas empresarial con **74.69% de cobertura de código** y **36 archivos de prueba + 9 archivos E2E**.
 
-| Comando                     | Descripción                                              |
-| :-------------------------- | :------------------------------------------------------- |
-| `npm test`                  | Ejecuta todas las 482 pruebas unitarias y de integración |
-| `npm run test:e2e`          | Ejecuta las 89 pruebas End-to-End completas              |
-| `npm run test:cov`          | Genera reporte de cobertura de código (>95%)             |
-| `npm run test:mutation`     | Ejecuta pruebas de mutación para medir calidad de tests  |
-| `npm run test:e2e:api`      | Pruebas E2E específicas de API                           |
-| `npm run test:e2e:business` | Pruebas E2E de flujos de negocio                         |
+| Comando                     | Descripción                                          |
+| :-------------------------- | :--------------------------------------------------- |
+| `npm test`                  | Ejecuta todas las pruebas unitarias y de integración |
+| `npm run test:e2e`          | Ejecuta las 9 suites de pruebas End-to-End completas |
+| `npm run test:cov`          | Genera reporte de cobertura de código (74.69%)       |
+| `npm run test:watch`        | Ejecuta tests en modo watch para desarrollo          |
+| `npm run test:e2e:api`      | Pruebas E2E específicas de API                       |
+| `npm run test:e2e:business` | Pruebas E2E de flujos de negocio                     |
 
 ### Métricas de Testing
 
-- **482 pruebas unitarias** ✅ (100% passing)
-- **89 pruebas E2E** ✅ (100% passing)
-- **>95% cobertura de código** ✅
-- **Tiempo de ejecución**: <10 segundos (unit), <90 segundos (E2E)
+- **425 tests unitarios** ✅ (100% passing)
+- **89 tests E2E** ✅ (100% passing)
+- **74.69% cobertura de código** ✅
+- **Tiempo de ejecución**: ~17 segundos (unit), ~88 segundos (E2E)
 
 ---
 
@@ -252,7 +260,7 @@ El proyecto cuenta con una suite de pruebas empresarial con **>95% de cobertura 
 
 ### Optimizaciones Implementadas
 
-- **29 índices estratégicos** en PostgreSQL
+- **34 índices estratégicos** en PostgreSQL
 - **Nomenclatura snake_case** optimizada
 - **Query builders** optimizados con TypeORM
 - **Paginación eficiente** en todos los endpoints
@@ -287,9 +295,9 @@ docker-compose -f docker-compose.prod.yml up -d
 Este proyecto utiliza **GitHub Actions** para la integración y el despliegue continuo. El pipeline está definido en `.github/workflows/ci-cd-pipeline.yml` e incluye las siguientes fases:
 
 1.  **Quality Gates:** Linting, formatting, y análisis de código estático
-2.  **Testing Comprehensive:** 482 pruebas unitarias + 89 pruebas E2E
+2.  **Testing Comprehensive:** 425 tests unitarios + 89 tests E2E
 3.  **Security Scanning:** npm audit y análisis de vulnerabilidades
-4.  **Code Coverage:** Verificación de >90% cobertura de código
+4.  **Code Coverage:** Verificación de >70% cobertura de código
 5.  **Build Validation:** Construcción y validación de Docker images
 6.  **Multi-Environment Deploy:** Despliegue automático a staging y producción
 
@@ -311,6 +319,11 @@ Este proyecto incluye documentación técnica completa y profesional que demuest
 - **[DATABASE_DESIGN.md](./docs/DATABASE_DESIGN.md)** - Diseño completo de base de datos con ERD, estrategia de indexing y benchmarks de performance
 - **[DATABASE_SCHEMA_DIAGRAM.md](./docs/DATABASE_SCHEMA_DIAGRAM.md)** - Diagrama visual del schema con relaciones y métricas de optimización
 - **[ADR-009: Database Design Architecture](./docs/adr/009-database-design-architecture.md)** - Decisiones de arquitectura de base de datos con alternativas consideradas
+
+### 🧪 Documentación de Testing y API
+
+- **[API_TESTING_GUIDE.md](./docs/API_TESTING_GUIDE.md)** - Guía completa de testing con ejemplos de curl para todos los 23+ endpoints, respuestas esperadas, y flujos de autenticación
+- **[Swagger/OpenAPI](http://localhost:3000/api/docs)** - Documentación interactiva de la API (cuando la aplicación está corriendo)
 
 ### 📋 Gestión de Proyecto
 
@@ -356,18 +369,29 @@ La arquitectura de este proyecto se basa en **Architectural Decision Records (AD
 
 - **Arquitectura Monolítica Modular** para optimización del rendimiento y simplicidad operacional
 - **Stack Tecnológico Empresarial** (NestJS + TypeScript + PostgreSQL + TypeORM) para robustez y escalabilidad
-- **Optimización de Base de Datos** con índices estratégicos y nomenclatura optimizada
-- **Autenticación JWT Avanzada** con blacklist de tokens para logout seguro
-- **Testing Exhaustivo** con >95% cobertura y mutation testing
+- **Módulos Separados por Dominio**: Products, Categories, Auth, Analytics con responsabilidades claras
+- **Optimización de Base de Datos** con 34 índices estratégicos y nomenclatura optimizada
+- **Autenticación JWT Avanzada** con blacklist de tokens para logout seguro y control de roles
+- **Testing Exhaustivo** con 74.69% cobertura, 425 tests unitarios + 89 E2E
 - **CI/CD Automatizado** con quality gates y security scanning
 - **Logging Estructurado** con correlation IDs para observabilidad empresarial
+- **API Pública Segura** con sanitización de datos sensibles en endpoints públicos
 
 ### 📋 Principios de Arquitectura Aplicados
 
-- **Separation of Concerns**: Módulos claramente separados (Auth, Products, Analytics, Logging)
-- **SOLID Principles**: Aplicados en toda la codebase
-- **Clean Architecture**: Capas bien definidas con inversión de dependencias
-- **Enterprise Patterns**: Repository pattern, DTO pattern, Guard pattern
+- **Modular Architecture**: Arquitectura modular enterprise-ready con separación clara por dominio (Products, Categories, Auth, Analytics)
+- **SOLID Principles**: Aplicados progresivamente con mejoras continuas en desarrollo
+- **Repository Pattern**: TypeORM repositories con optimizaciones específicas de performance y DI tokens
+- **Enterprise Patterns**: DTO pattern, Guard pattern, Interceptor pattern, Role-based access control implementados
+- **Security by Design**: Endpoints públicos con datos sanitizados, autenticación robusta con JWT blacklist
+- **Performance First**: 34 índices estratégicos, consultas optimizadas, benchmarking en tiempo real
+
+### 🛠️ Mejoras Continuas en Progreso
+
+- **Service Separation**: Extracción de CategoriesService para cumplir SRP
+- **Dependency Inversion**: Interfaces de repository para mayor flexibilidad
+- **Query Optimization**: Value Objects para encapsular lógica compleja de consultas
+- **Architecture Evolution**: Preparación para patterns avanzados según crecimiento del proyecto
 
 ---
 

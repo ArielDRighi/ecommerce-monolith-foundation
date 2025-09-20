@@ -109,7 +109,7 @@ exports[`Snapshot Testing E2E - API Response Validation Category Response Snapsh
   },
   "meta": {
     "method": "POST",
-    "path": "/api/v1/products/categories",
+    "path": "/api/v1/categories",
     "statusCode": 201,
     "version": "1.0.0",
   },
@@ -127,7 +127,7 @@ exports[`Snapshot Testing E2E - API Response Validation Category Response Snapsh
   },
   "meta": {
     "method": "GET",
-    "path": "/api/v1/products/categories/{uuid}",
+    "path": "/api/v1/categories/{uuid}",
     "statusCode": 200,
     "version": "1.0.0",
   },
@@ -145,7 +145,7 @@ exports[`Snapshot Testing E2E - API Response Validation Category Response Snapsh
   },
   "meta": {
     "method": "PATCH",
-    "path": "/api/v1/products/categories/{uuid}",
+    "path": "/api/v1/categories/{uuid}",
     "statusCode": 200,
     "version": "1.0.0",
   },
@@ -281,7 +281,11 @@ exports[`Snapshot Testing E2E - API Response Validation Pagination Response Snap
           "slug": "snapshot-electronics",
         },
       ],
-      "createdBy": {},
+      "createdBy": {
+        "email": "",
+        "firstName": "",
+        "lastName": "",
+      },
       "description": "Product created for snapshot testing",
       "images": [
         "create-1.jpg",
@@ -313,7 +317,11 @@ exports[`Snapshot Testing E2E - API Response Validation Pagination Response Snap
           "slug": "snapshot-electronics",
         },
       ],
-      "createdBy": {},
+      "createdBy": {
+        "email": "",
+        "firstName": "",
+        "lastName": "",
+      },
       "description": "A high-quality product for snapshot testing with consistent data",
       "images": [
         "snapshot-product-1.jpg",
@@ -503,7 +511,11 @@ exports[`Snapshot Testing E2E - API Response Validation Product Response Snapsho
           "slug": "snapshot-electronics",
         },
       ],
-      "createdBy": {},
+      "createdBy": {
+        "email": "",
+        "firstName": "",
+        "lastName": "",
+      },
       "description": "Product created for snapshot testing",
       "images": [
         "create-1.jpg",
@@ -535,7 +547,11 @@ exports[`Snapshot Testing E2E - API Response Validation Product Response Snapsho
           "slug": "snapshot-electronics",
         },
       ],
-      "createdBy": {},
+      "createdBy": {
+        "email": "",
+        "firstName": "",
+        "lastName": "",
+      },
       "description": "A high-quality product for snapshot testing with consistent data",
       "images": [
         "snapshot-product-1.jpg",

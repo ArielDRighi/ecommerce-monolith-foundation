@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../../src/app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 
 describe('Authentication E2E', () => {
   let app: INestApplication;
@@ -27,9 +28,9 @@ describe('Authentication E2E', () => {
   });
 
   describe('/auth (Authentication)', () => {
-    const timestamp = Date.now();
+    const uniqueId = uuidv4().substring(0, 8);
     const testUser = {
-      email: `test-e2e-${timestamp}@example.com`,
+      email: `test-e2e-${uniqueId}@example.com`,
       password: 'TestPassword123!',
       firstName: 'Test',
       lastName: 'User',
@@ -55,10 +56,27 @@ describe('Authentication E2E', () => {
     });
 
     it('/api/v1/auth/register (POST) - should fail with duplicate email', async () => {
+      // Create a unique user for this test to avoid conflicts with parallel execution
+      const uniqueId = uuidv4().substring(0, 8); // Use first 8 chars of UUID for readability
+      const duplicateTestUser = {
+        email: `duplicate-test-${uniqueId}@example.com`,
+        password: 'TestPassword123!',
+        firstName: 'Duplicate',
+        lastName: 'Test',
+      };
+
+      // First, register a user successfully
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       await request(app.getHttpServer())
         .post('/api/v1/auth/register')
-        .send(testUser)
+        .send(duplicateTestUser)
+        .expect(201);
+
+      // Then, try to register the same user again - should fail with 409
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(duplicateTestUser)
         .expect(409);
     });
 

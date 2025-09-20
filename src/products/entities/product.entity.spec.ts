@@ -1,5 +1,5 @@
 import { Product } from './product.entity';
-import { Category } from './category.entity';
+import { Category } from '../../categories/entities/category.entity';
 import { User, UserRole } from '../../auth/entities/user.entity';
 
 describe('Product Entity', () => {
