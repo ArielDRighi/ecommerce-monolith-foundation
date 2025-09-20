@@ -103,7 +103,8 @@ export class ProductsController {
   @ApiQuery({
     name: 'category',
     required: false,
-    description: 'Filter by category slug',
+    description:
+      'Filter by category slug (e.g., "electronics", "clothing", "books")',
     example: 'electronics',
   })
   @ApiQuery({
@@ -159,7 +160,7 @@ export class ProductsController {
       page,
       limit,
       search,
-      categoryId: category,
+      categorySlug: category,
       minPrice,
       maxPrice,
       sortBy,
@@ -268,7 +269,8 @@ export class ProductsController {
   @ApiQuery({
     name: 'category',
     required: false,
-    description: 'Filter by category slug',
+    description:
+      'Filter by category slug (e.g., "electronics", "clothing", "books")',
     example: 'electronics',
   })
   @ApiQuery({
@@ -317,7 +319,7 @@ export class ProductsController {
       page,
       limit,
       search,
-      categoryId: category,
+      categorySlug: category,
       minPrice,
       maxPrice,
       sortBy,
@@ -393,9 +395,10 @@ export class ProductsController {
   })
   @ApiParam({
     name: 'slug',
-    description: 'Product slug',
+    description:
+      'Product slug (available: macbook-pro-16, iphone-15-pro, premium-cotton-tshirt)',
     type: 'string',
-    example: 'laptop-gaming-asus-rog-2024',
+    example: 'macbook-pro-16',
   })
   @ApiResponse({
     status: 200,
@@ -420,15 +423,16 @@ export class ProductsController {
       'Optimized for search performance using specialized indexes and pagination.',
   })
   @ApiQuery({
-    name: 'q',
+    name: 'search',
     required: false,
     description: 'Search query for product name and description',
     example: 'gaming laptop',
   })
   @ApiQuery({
-    name: 'category',
+    name: 'categorySlug',
     required: false,
-    description: 'Filter by category slug',
+    description:
+      'Filter by category slug (e.g., "electronics", "clothing", "books")',
     example: 'electronics',
   })
   @ApiQuery({

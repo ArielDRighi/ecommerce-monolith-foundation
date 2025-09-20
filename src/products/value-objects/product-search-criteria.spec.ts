@@ -65,16 +65,16 @@ describe('ProductSearchCriteria', () => {
       );
     });
 
-    it('should apply category filter when categoryId is provided', () => {
-      const categoryId = '902eaa28-87c4-4722-a7dd-dcbf8800aa31';
-      const searchDto: ProductSearchDto = { categoryId };
+    it('should apply category filter when categorySlug is provided', () => {
+      const categorySlug = 'electronics';
+      const searchDto: ProductSearchDto = { categorySlug };
       const criteria = new ProductSearchCriteria(searchDto);
 
       criteria.buildQueryBuilder(mockQueryBuilder);
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'category.id = :categoryId',
-        { categoryId },
+        'category.slug = :categorySlug',
+        { categorySlug },
       );
     });
 
@@ -193,7 +193,7 @@ describe('ProductSearchCriteria', () => {
     it('should apply basic filters and simplified search without joins', () => {
       const searchDto: ProductSearchDto = {
         search: 'test',
-        categoryId: '902eaa28-87c4-4722-a7dd-dcbf8800aa31',
+        categorySlug: 'electronics',
         minPrice: 100,
       };
       const criteria = new ProductSearchCriteria(searchDto);
@@ -216,7 +216,7 @@ describe('ProductSearchCriteria', () => {
       );
       // Category filter should not be applied in count query
       expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
-        'category.id = :categoryId',
+        'category.slug = :categorySlug',
         expect.any(Object),
       );
     });
@@ -262,7 +262,7 @@ describe('ProductSearchCriteria', () => {
   describe('requiresJoins', () => {
     it('should return true when category filter is present', () => {
       const searchDto: ProductSearchDto = {
-        categoryId: '902eaa28-87c4-4722-a7dd-dcbf8800aa31',
+        categorySlug: 'electronics',
       };
       const criteria = new ProductSearchCriteria(searchDto);
 
@@ -281,7 +281,7 @@ describe('ProductSearchCriteria', () => {
     it('should generate consistent cache keys for identical search criteria', () => {
       const searchDto: ProductSearchDto = {
         search: 'macbook',
-        categoryId: '902eaa28-87c4-4722-a7dd-dcbf8800aa31',
+        categorySlug: 'electronics',
         minPrice: 500,
         maxPrice: 2000,
         page: 1,
@@ -318,7 +318,7 @@ describe('ProductSearchCriteria', () => {
     it('should handle comprehensive search with all filters', () => {
       const searchDto: ProductSearchDto = {
         search: 'macbook pro',
-        categoryId: '902eaa28-87c4-4722-a7dd-dcbf8800aa31',
+        categorySlug: 'electronics',
         minPrice: 1000,
         maxPrice: 3000,
         inStock: true,
@@ -344,8 +344,8 @@ describe('ProductSearchCriteria', () => {
         { searchTerm: 'macbook pro' },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'category.id = :categoryId',
-        { categoryId: '902eaa28-87c4-4722-a7dd-dcbf8800aa31' },
+        'category.slug = :categorySlug',
+        { categorySlug: 'electronics' },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'product.price BETWEEN :minPrice AND :maxPrice',

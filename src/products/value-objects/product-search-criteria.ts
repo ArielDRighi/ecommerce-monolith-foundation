@@ -106,9 +106,9 @@ export class ProductSearchCriteria {
    * Apply category filter
    */
   private applyCategoryFilter(queryBuilder: SelectQueryBuilder<Product>): void {
-    if (this.filters.categoryId) {
-      queryBuilder.andWhere('category.id = :categoryId', {
-        categoryId: this.filters.categoryId,
+    if (this.filters.categorySlug) {
+      queryBuilder.andWhere('category.slug = :categorySlug', {
+        categorySlug: this.filters.categorySlug,
       });
     }
   }
@@ -251,7 +251,7 @@ export class ProductSearchCriteria {
    * Check if this search criteria requires joins (for optimization)
    */
   requiresJoins(): boolean {
-    return !!this.filters.categoryId;
+    return !!this.filters.categorySlug;
   }
 
   /**
@@ -260,7 +260,7 @@ export class ProductSearchCriteria {
   getCacheKey(): string {
     const keyParams = {
       search: this.filters.search,
-      categoryId: this.filters.categoryId,
+      categorySlug: this.filters.categorySlug,
       minPrice: this.filters.minPrice,
       maxPrice: this.filters.maxPrice,
       inStock: this.filters.inStock,

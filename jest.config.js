@@ -5,13 +5,13 @@ module.exports = {
 
   // Cobertura solo de archivos fuente
   collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.spec.ts',
-    '!src/**/*.test.ts',
-    '!src/**/*.d.ts',
-    '!src/main.ts',
+    '**/*.ts',
+    '!**/*.spec.ts',
+    '!**/*.test.ts',
+    '!**/*.d.ts',
+    '!main.ts',
   ],
-  coverageDirectory: './coverage',
+  coverageDirectory: '../coverage',
   coverageReporters: ['text', 'lcov', 'html'],
 
   // CRÍTICO: Solo buscar tests unitarios en src/
