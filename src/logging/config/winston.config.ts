@@ -35,6 +35,12 @@ export const createWinstonLogger = (configService: ConfigService) => {
     environment: configService.get<string>('NODE_ENV', DEFAULT_ENVIRONMENT),
   };
 
+  // ⚠️ SILENCIAR COMPLETAMENTE EN TESTS
+  // Si estamos en modo test, usar nivel 'error' y silenciar console
+  if (loggerConfig.environment === 'test') {
+    loggerConfig.level = 'error';
+  }
+
   // Ensure log directory exists
   const logDirPath = join(process.cwd(), loggerConfig.logDir);
   if (!existsSync(logDirPath)) {
@@ -71,16 +77,21 @@ export const createWinstonLogger = (configService: ConfigService) => {
     }),
   );
 
-  // Start with console transport only
-  const loggerTransports: any[] = [
-    new transports.Console({
-      format:
-        loggerConfig.environment === 'production'
-          ? structuredFormat
-          : consoleFormat,
-      level: loggerConfig.level,
-    }),
-  ];
+  // Start with console transport (disabled in test environment)
+  const loggerTransports: any[] = [];
+
+  // Add console transport only if not in test environment
+  if (loggerConfig.environment !== 'test') {
+    loggerTransports.push(
+      new transports.Console({
+        format:
+          loggerConfig.environment === 'production'
+            ? structuredFormat
+            : consoleFormat,
+        level: loggerConfig.level,
+      }),
+    );
+  }
 
   // Add file transports if directory exists and is writable
   if (existsSync(logDirPath)) {
