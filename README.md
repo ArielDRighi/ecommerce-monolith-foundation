@@ -366,7 +366,7 @@ La arquitectura de este proyecto se basa en **Architectural Decision Records (AD
 
 - **Modular Architecture**: Arquitectura modular enterprise-ready con separación clara por dominio
 - **SOLID Principles**: Aplicados progresivamente (mejoras continuas en desarrollo)
-- **Repository Pattern**: TypeORM repositories con optimizaciones específicas de performance  
+- **Repository Pattern**: TypeORM repositories con optimizaciones específicas de performance
 - **Enterprise Patterns**: DTO pattern, Guard pattern, Interceptor pattern implementados
 
 ### 🛠️ Mejoras Continuas en Progreso

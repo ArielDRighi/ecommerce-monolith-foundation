@@ -21,15 +21,18 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { ProductsService, PaginatedResult } from './products.service';
+import { CategoriesService } from '../categories/categories.service';
 import {
   CreateProductDto,
   UpdateProductDto,
   ProductSearchDto,
   ProductResponseDto,
+} from './dto';
+import {
   CreateCategoryDto,
   UpdateCategoryDto,
   CategoryResponseDto,
-} from './dto';
+} from '../categories/dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -39,7 +42,10 @@ import { User, UserRole } from '../auth/entities/user.entity';
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly categoriesService: CategoriesService,
+  ) {}
 
   // ==============================
   // ADMIN ONLY ENDPOINTS
@@ -499,7 +505,7 @@ export class ProductsController {
     type: [CategoryResponseDto],
   })
   async getAllCategories(): Promise<CategoryResponseDto[]> {
-    return this.productsService.getAllCategories();
+    return this.categoriesService.getAllCategories();
   }
 
   @Get('categories/:id')
@@ -526,7 +532,7 @@ export class ProductsController {
   async getCategoryById(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<CategoryResponseDto> {
-    return this.productsService.getCategoryById(id);
+    return this.categoriesService.getCategoryById(id);
   }
 
   @Post('categories')
@@ -561,7 +567,7 @@ export class ProductsController {
   async createCategory(
     @Body() createCategoryDto: CreateCategoryDto,
   ): Promise<CategoryResponseDto> {
-    return this.productsService.createCategory(createCategoryDto);
+    return this.categoriesService.createCategory(createCategoryDto);
   }
 
   @Patch('categories/:id')
@@ -607,7 +613,7 @@ export class ProductsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ): Promise<CategoryResponseDto> {
-    return this.productsService.updateCategory(id, updateCategoryDto);
+    return this.categoriesService.updateCategory(id, updateCategoryDto);
   }
 
   @Delete('categories/:id')
@@ -647,7 +653,7 @@ export class ProductsController {
     description: 'Category not found',
   })
   async deleteCategory(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.productsService.deleteCategory(id);
+    return this.categoriesService.deleteCategory(id);
   }
 
   @Get(':id')

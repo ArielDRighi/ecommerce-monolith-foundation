@@ -1,15 +1,13 @@
 import {
   Injectable,
   NotFoundException,
-  BadRequestException,
   ConflictException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, In, IsNull } from 'typeorm';
+import { Repository, SelectQueryBuilder, IsNull } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { Product } from './entities/product.entity';
-import { Category } from './entities/category.entity';
 import { User } from '../auth/entities/user.entity';
 import {
   CreateProductDto,
@@ -18,11 +16,9 @@ import {
   ProductSortBy,
   SortOrder,
   ProductResponseDto,
-  CreateCategoryDto,
-  UpdateCategoryDto,
-  CategoryResponseDto,
 } from './dto';
 import { CreatedByUserDto } from './dto/product-response.dto';
+import { CategoriesService } from '../categories/categories.service';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -39,8 +35,7 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
+    private readonly categoriesService: CategoriesService,
   ) {}
 
   // #region PRODUCT CRUD METHODS (ADMIN ONLY)
@@ -60,24 +55,10 @@ export class ProductsService {
       );
     }
 
-    // Verify that all category IDs exist
-    const categories = await this.categoryRepository.find({
-      where: {
-        id: In(createProductDto.categoryIds),
-        isActive: true,
-        deletedAt: IsNull(),
-      },
-    });
-
-    if (categories.length !== createProductDto.categoryIds.length) {
-      const foundIds = categories.map((cat) => cat.id);
-      const missingIds = createProductDto.categoryIds.filter(
-        (id) => !foundIds.includes(id),
-      );
-      throw new BadRequestException(
-        `Categories not found: ${missingIds.join(', ')}`,
-      );
-    }
+    // Verify that all category IDs exist using CategoriesService
+    const categories = await this.categoriesService.validateCategoryIds(
+      createProductDto.categoryIds,
+    );
 
     // Create product (categoryIds is handled separately via categories relation)
     const product = this.productRepository.create({
@@ -212,37 +193,30 @@ export class ProductsService {
   // #region PUBLIC SEARCH METHODS
 
   /**
-   * Public search for products (without sensitive user data)
-   *
-   * This method is designed for unauthenticated/public access and differs from
-   * searchProducts() by:
-   * - Excluding sensitive user information (createdBy is sanitized)
-   * - Only returning active products (isActive = true)
-   * - Optimized for public consumption with data sanitization
-   * - Uses performance-optimized queries for better public API response times
-   *
-   * @param searchDto - Search criteria including filters, pagination, and sorting
-   * @returns Promise<PaginatedResult<ProductResponseDto>> - Sanitized product results
-   * @throws Error - When search operation fails
+   * Base search method with optional user data inclusion
    */
-  async searchProductsPublic(
+  private async searchProductsBase(
     searchDto: ProductSearchDto,
+    includeUserData: boolean = true,
   ): Promise<PaginatedResult<ProductResponseDto>> {
     try {
       const queryBuilder = this.productRepository
         .createQueryBuilder('product')
-        .leftJoinAndSelect('product.categories', 'category')
-        // No incluir información del usuario creador en búsquedas públicas
+        .leftJoinAndSelect('product.categories', 'category');
+
+      if (includeUserData) {
+        queryBuilder.leftJoinAndSelect('product.createdBy', 'createdBy');
+      }
+
+      queryBuilder
         .where('product.deletedAt IS NULL')
         .andWhere('product.isActive = true');
 
-      // Apply filters with optimization hints
+      // Apply filters and sorting
       this.applySearchFilters(queryBuilder, searchDto);
-
-      // Apply sorting with index-aware logic
       this.applySorting(queryBuilder, searchDto);
 
-      // Optimization: Use simple COUNT query without complex joins for better performance
+      // Get total count using optimized query
       let total: number;
       try {
         const countQueryBuilder = this.productRepository
@@ -250,13 +224,9 @@ export class ProductsService {
           .where('product.deletedAt IS NULL')
           .andWhere('product.isActive = true');
 
-        // Apply only simple filters for counting (no joins to avoid complexity)
         this.applySimpleFiltersForCount(countQueryBuilder, searchDto);
-
-        // Get total count using optimized query
         total = await countQueryBuilder.getCount();
       } catch (error) {
-        // Fallback to basic count if complex query fails
         console.warn(
           'Count query failed, using basic count:',
           error instanceof Error ? error.message : 'Unknown error',
@@ -268,21 +238,22 @@ export class ProductsService {
 
       // Apply pagination
       const page = searchDto.page || 1;
-      const limit = Math.min(searchDto.limit || 20, 100); // Cap at 100 for performance
+      const limit = Math.min(searchDto.limit || 20, 100);
       const skip = (page - 1) * limit;
 
       queryBuilder.skip(skip).take(limit);
 
-      // Execute query
       const products = await queryBuilder.getMany();
-
-      // Transform to DTOs with sanitized data
       const productDtos = products.map((product) => {
         const dto = plainToClass(ProductResponseDto, product, {
           excludeExtraneousValues: true,
         });
-        // Asegurar que no hay información del usuario
-        dto.createdBy = new CreatedByUserDto();
+
+        // Sanitize user data for public access
+        if (!includeUserData) {
+          dto.createdBy = new CreatedByUserDto();
+        }
+
         return dto;
       });
 
@@ -297,7 +268,7 @@ export class ProductsService {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
-      this.logger.error('Error in searchProductsPublic', {
+      this.logger.error('Error in product search', {
         error: errorMessage,
         stack: errorStack,
         searchDto,
@@ -307,107 +278,32 @@ export class ProductsService {
   }
 
   /**
+   * Public search for products (without sensitive user data)
+   */
+  async searchProductsPublic(
+    searchDto: ProductSearchDto,
+  ): Promise<PaginatedResult<ProductResponseDto>> {
+    return this.searchProductsBase(searchDto, false);
+  }
+
+  /**
    * Admin/authenticated search for products (with full user data)
    */
   async searchProducts(
     searchDto: ProductSearchDto,
   ): Promise<PaginatedResult<ProductResponseDto>> {
-    try {
-      const queryBuilder = this.productRepository
-        .createQueryBuilder('product')
-        .leftJoinAndSelect('product.categories', 'category')
-        .leftJoinAndSelect('product.createdBy', 'createdBy')
-        .where('product.deletedAt IS NULL')
-        .andWhere('product.isActive = true');
-
-      // Apply filters with optimization hints
-      this.applySearchFilters(queryBuilder, searchDto);
-
-      // Apply sorting with index-aware logic
-      this.applySorting(queryBuilder, searchDto);
-
-      // Optimization: Use simple COUNT query without complex joins for better performance
-      let total: number;
-      try {
-        const countQueryBuilder = this.productRepository
-          .createQueryBuilder('product')
-          .where('product.deletedAt IS NULL')
-          .andWhere('product.isActive = true');
-
-        // Apply only simple filters for counting (no joins to avoid complexity)
-        this.applySimpleFiltersForCount(countQueryBuilder, searchDto);
-
-        // Get total count using optimized query
-        total = await countQueryBuilder.getCount();
-      } catch (error) {
-        // Fallback to basic count if complex query fails
-        console.warn(
-          'Count query failed, using basic count:',
-          error instanceof Error ? error.message : 'Unknown error',
-        );
-        total = await this.productRepository.count({
-          where: { deletedAt: IsNull(), isActive: true },
-        });
-      }
-
-      // Apply pagination
-      const page = searchDto.page || 1;
-      const limit = Math.min(searchDto.limit || 20, 100); // Cap at 100 for performance
-      const skip = (page - 1) * limit;
-
-      queryBuilder.skip(skip).take(limit);
-
-      // Execute query
-      const products = await queryBuilder.getMany();
-
-      // Transform to DTOs
-      const productDtos = products.map((product) =>
-        plainToClass(ProductResponseDto, product, {
-          excludeExtraneousValues: true,
-        }),
-      );
-
-      return {
-        data: productDtos,
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      };
-    } catch (error) {
-      this.logger.error('Error in searchProducts:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        searchDto,
-      });
-
-      // For non-critical search failures, return empty result for graceful degradation
-      // Critical database errors should still propagate
-      if (error instanceof Error && error.message.includes('database')) {
-        throw error; // Re-throw critical database errors
-      }
-
-      return {
-        data: [],
-        total: 0,
-        page: searchDto.page || 1,
-        limit: searchDto.limit || 20,
-        totalPages: 0,
-      };
-    }
+    return this.searchProductsBase(searchDto, true);
   }
 
   private applySearchFilters(
     queryBuilder: SelectQueryBuilder<Product>,
     searchDto: ProductSearchDto,
   ): void {
-    // Optimized text search using our performance indexes
+    // Text search
     if (searchDto.search && searchDto.search.trim().length > 0) {
       const searchTerm = searchDto.search.trim();
 
-      // Use different search strategies based on search term characteristics
       if (searchTerm.length >= 3) {
-        // For longer terms, use full-text search with GIN index (optimal for word searches)
         queryBuilder.andWhere(
           `(
             to_tsvector('spanish', product.name || ' ' || COALESCE(product.description, '')) 
@@ -418,7 +314,6 @@ export class ProductsService {
           { searchTerm },
         );
       } else {
-        // For short terms, use trigram similarity (optimal for partial/fuzzy matching)
         queryBuilder.andWhere(
           '(product.name % :searchTerm OR product.description % :searchTerm)',
           { searchTerm },
@@ -426,16 +321,35 @@ export class ProductsService {
       }
     }
 
-    // Optimized category filter using composite indexes
+    // Category filter
     if (searchDto.categoryId) {
       queryBuilder.andWhere('category.id = :categoryId', {
         categoryId: searchDto.categoryId,
       });
     }
 
-    // Price range filters (leverage idx_products_price_range and composite indexes)
+    // Price filters
+    this.applyPriceFilters(queryBuilder, searchDto);
+
+    // Stock filter
+    if (searchDto.inStock === true) {
+      queryBuilder.andWhere('product.stock > 0');
+    }
+
+    // Rating filter
+    if (searchDto.minRating !== undefined && searchDto.minRating !== null) {
+      queryBuilder.andWhere(
+        '(product.rating >= :minRating OR product.rating IS NULL)',
+        { minRating: searchDto.minRating },
+      );
+    }
+  }
+
+  private applyPriceFilters(
+    queryBuilder: SelectQueryBuilder<Product>,
+    searchDto: ProductSearchDto,
+  ): void {
     if (searchDto.minPrice !== undefined && searchDto.maxPrice !== undefined) {
-      // Use BETWEEN for range queries to leverage price range index
       queryBuilder.andWhere('product.price BETWEEN :minPrice AND :maxPrice', {
         minPrice: searchDto.minPrice,
         maxPrice: searchDto.maxPrice,
@@ -451,22 +365,6 @@ export class ProductsService {
           maxPrice: searchDto.maxPrice,
         });
       }
-    }
-
-    // Stock filter (leverages idx_products_stock_filter)
-    if (searchDto.inStock === true) {
-      queryBuilder.andWhere('product.stock > 0');
-    }
-
-    // Rating filter (leverages idx_products_rating for better performance)
-    // Handle NULL ratings correctly - include products without rating when no filter is applied
-    if (searchDto.minRating !== undefined && searchDto.minRating !== null) {
-      queryBuilder.andWhere(
-        '(product.rating >= :minRating OR product.rating IS NULL)',
-        {
-          minRating: searchDto.minRating,
-        },
-      );
     }
   }
 
@@ -523,206 +421,12 @@ export class ProductsService {
     }
   }
 
-  // #region CATEGORY CRUD METHODS (ADMIN ONLY)
-
-  async createCategory(
-    createCategoryDto: CreateCategoryDto,
-  ): Promise<CategoryResponseDto> {
-    // Check if slug already exists
-    const existingCategory = await this.categoryRepository.findOne({
-      where: { slug: createCategoryDto.slug, deletedAt: IsNull() },
-    });
-
-    if (existingCategory) {
-      throw new ConflictException(
-        `Category with slug '${createCategoryDto.slug}' already exists`,
-      );
-    }
-
-    const category = this.categoryRepository.create(createCategoryDto);
-    const savedCategory = await this.categoryRepository.save(category);
-
-    return plainToClass(CategoryResponseDto, savedCategory, {
-      excludeExtraneousValues: true,
-    });
-  }
-
-  async updateCategory(
-    id: string,
-    updateCategoryDto: UpdateCategoryDto,
-  ): Promise<CategoryResponseDto> {
-    const category = await this.categoryRepository.findOne({
-      where: { id, deletedAt: IsNull() },
-    });
-
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
-    }
-
-    // Check if slug conflicts with another category
-    if (updateCategoryDto.slug && updateCategoryDto.slug !== category.slug) {
-      const existingCategory = await this.categoryRepository.findOne({
-        where: { slug: updateCategoryDto.slug, deletedAt: IsNull() },
-      });
-
-      if (existingCategory && existingCategory.id !== id) {
-        throw new ConflictException(
-          `Category with slug '${updateCategoryDto.slug}' already exists`,
-        );
-      }
-    }
-
-    // Update category fields explicitly for safety
-    if (updateCategoryDto.name !== undefined) {
-      category.name = updateCategoryDto.name;
-    }
-    if (updateCategoryDto.slug !== undefined) {
-      category.slug = updateCategoryDto.slug;
-    }
-    if (updateCategoryDto.description !== undefined) {
-      category.description = updateCategoryDto.description;
-    }
-    if (updateCategoryDto.isActive !== undefined) {
-      category.isActive = updateCategoryDto.isActive;
-    }
-    const savedCategory = await this.categoryRepository.save(category);
-
-    return plainToClass(CategoryResponseDto, savedCategory, {
-      excludeExtraneousValues: true,
-    });
-  }
-
-  async deleteCategory(id: string): Promise<void> {
-    const category = await this.categoryRepository.findOne({
-      where: { id, deletedAt: IsNull() },
-      relations: ['products'],
-    });
-
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
-    }
-
-    // Check if category has products
-    if (category.products && category.products.length > 0) {
-      throw new BadRequestException(
-        'Cannot delete category that contains products. Remove products first.',
-      );
-    }
-
-    // Soft delete using TypeORM's built-in soft delete
-    await this.categoryRepository.softDelete(id);
-  }
-
-  async getAllCategories(): Promise<CategoryResponseDto[]> {
-    const categories = await this.categoryRepository.find({
-      where: { deletedAt: IsNull(), isActive: true },
-      order: { name: 'ASC' },
-    });
-
-    return categories.map((category) =>
-      plainToClass(CategoryResponseDto, category, {
-        excludeExtraneousValues: true,
-      }),
-    );
-  }
-
-  async getCategoryById(id: string): Promise<CategoryResponseDto> {
-    const category = await this.categoryRepository.findOne({
-      where: { id, deletedAt: IsNull(), isActive: true },
-    });
-
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
-    }
-
-    return plainToClass(CategoryResponseDto, category, {
-      excludeExtraneousValues: true,
-    });
-  }
-
   // #region OPTIMIZED PRIVATE METHODS
-
-  /**
-   * Optimized search filters for COUNT queries (without relations/joins)
-   * This provides better performance for pagination total counts
-   */
-  private applySearchFiltersForCount(
-    queryBuilder: SelectQueryBuilder<Product>,
-    searchDto: ProductSearchDto,
-  ): void {
-    // Optimized text search using our performance indexes
-    if (searchDto.search && searchDto.search.trim().length > 0) {
-      const searchTerm = searchDto.search.trim();
-
-      if (searchTerm.length >= 3) {
-        // Use full-text search with GIN index
-        queryBuilder.andWhere(
-          `(
-            to_tsvector('spanish', product.name || ' ' || COALESCE(product.description, '')) 
-            @@ plainto_tsquery('spanish', :searchTerm)
-            OR product.name % :searchTerm
-            OR product.description % :searchTerm
-          )`,
-          { searchTerm },
-        );
-      } else {
-        // Use trigram similarity for short terms
-        queryBuilder.andWhere(
-          '(product.name % :searchTerm OR product.description % :searchTerm)',
-          { searchTerm },
-        );
-      }
-    }
-
-    // For category filter in count query, we need to join
-    if (searchDto.categoryId) {
-      queryBuilder
-        .leftJoin('product.categories', 'category')
-        .andWhere('category.id = :categoryId', {
-          categoryId: searchDto.categoryId,
-        });
-    }
-
-    // Price range filters
-    if (searchDto.minPrice !== undefined && searchDto.maxPrice !== undefined) {
-      queryBuilder.andWhere('product.price BETWEEN :minPrice AND :maxPrice', {
-        minPrice: searchDto.minPrice,
-        maxPrice: searchDto.maxPrice,
-      });
-    } else {
-      if (searchDto.minPrice !== undefined) {
-        queryBuilder.andWhere('product.price >= :minPrice', {
-          minPrice: searchDto.minPrice,
-        });
-      }
-      if (searchDto.maxPrice !== undefined) {
-        queryBuilder.andWhere('product.price <= :maxPrice', {
-          maxPrice: searchDto.maxPrice,
-        });
-      }
-    }
-
-    // Stock filter
-    if (searchDto.inStock === true) {
-      queryBuilder.andWhere('product.stock > 0');
-    }
-
-    // Rating filter - Handle NULL ratings correctly
-    if (searchDto.minRating !== undefined && searchDto.minRating !== null) {
-      queryBuilder.andWhere(
-        '(product.rating >= :minRating OR product.rating IS NULL)',
-        {
-          minRating: searchDto.minRating,
-        },
-      );
-    }
-  }
 
   // #region PUBLIC METHODS
 
   /**
    * Get all products with pagination and filtering
-   * High-performance endpoint with optimized query building
    */
   async getAllProducts(options: {
     page: number;
@@ -781,8 +485,7 @@ export class ProductsService {
   }
 
   /**
-   * High-performance product search for popular/trending products
-   * Leverages idx_products_popularity_performance and idx_products_views_performance
+   * Get popular products by order and view count
    */
   async getPopularProducts(limit: number = 10): Promise<ProductResponseDto[]> {
     const products = await this.productRepository
@@ -804,8 +507,7 @@ export class ProductsService {
   }
 
   /**
-   * High-performance search for recently added products
-   * Leverages idx_products_recent_active composite index
+   * Get recently added products
    */
   async getRecentProducts(limit: number = 10): Promise<ProductResponseDto[]> {
     const products = await this.productRepository
@@ -825,8 +527,7 @@ export class ProductsService {
   }
 
   /**
-   * High-performance search for products by category with optimal index usage
-   * Leverages idx_product_categories_category_performance
+   * Get products by category with pagination
    */
   async getProductsByCategory(
     categoryId: string,
@@ -873,12 +574,19 @@ export class ProductsService {
   }
 
   /**
-   * Get product by slug (public access - without sensitive user data)
+   * Get product by slug with optional user data
    */
-  async getProductBySlugPublic(slug: string): Promise<ProductResponseDto> {
+  async getProductBySlug(
+    slug: string,
+    includeUserData: boolean = true,
+  ): Promise<ProductResponseDto> {
+    const relations = includeUserData
+      ? ['categories', 'createdBy']
+      : ['categories'];
+
     const product = await this.productRepository.findOne({
       where: { slug, deletedAt: IsNull(), isActive: true },
-      relations: ['categories'], // No incluir createdBy
+      relations,
     });
 
     if (!product) {
@@ -896,83 +604,45 @@ export class ProductsService {
       excludeExtraneousValues: true,
     });
 
-    // Asegurar que no hay información del usuario
-    dto.createdBy = new CreatedByUserDto();
+    // Sanitize user data for public access
+    if (!includeUserData) {
+      dto.createdBy = new CreatedByUserDto();
+    }
 
     return dto;
   }
 
   /**
-   * Optimized slug-based product lookup (admin/authenticated access - with full user data)
-   * Leverages unique idx_products_slug_unique index
+   * Public access wrapper for getProductBySlug
    */
-  async getProductBySlug(slug: string): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findOne({
-      where: { slug, deletedAt: IsNull(), isActive: true },
-      relations: ['categories', 'createdBy'],
-    });
-
-    if (!product) {
-      throw new NotFoundException(`Product with slug '${slug}' not found`);
-    }
-
-    // Increment view count (fire and forget, atomic)
-    this.productRepository
-      .increment({ id: product.id }, 'viewCount', 1)
-      .catch(() => {
-        // Silent fail for view count increment
-      });
-
-    return plainToClass(ProductResponseDto, product, {
-      excludeExtraneousValues: true,
-    });
+  async getProductBySlugPublic(slug: string): Promise<ProductResponseDto> {
+    return this.getProductBySlug(slug, false);
   }
 
   /**
-   * Simple filters for count queries (no joins, no complex operations)
-   * This ensures getCount() works correctly
+   * Simple filters for count queries
    */
   private applySimpleFiltersForCount(
     queryBuilder: SelectQueryBuilder<Product>,
     searchDto: ProductSearchDto,
   ): void {
-    // Only apply simple filters that don't require joins
-
-    // Price range filters
-    if (searchDto.minPrice !== undefined && searchDto.maxPrice !== undefined) {
-      queryBuilder.andWhere('product.price BETWEEN :minPrice AND :maxPrice', {
-        minPrice: searchDto.minPrice,
-        maxPrice: searchDto.maxPrice,
-      });
-    } else {
-      if (searchDto.minPrice !== undefined) {
-        queryBuilder.andWhere('product.price >= :minPrice', {
-          minPrice: searchDto.minPrice,
-        });
-      }
-      if (searchDto.maxPrice !== undefined) {
-        queryBuilder.andWhere('product.price <= :maxPrice', {
-          maxPrice: searchDto.maxPrice,
-        });
-      }
-    }
+    // Price filters
+    this.applyPriceFilters(queryBuilder, searchDto);
 
     // Stock filter
     if (searchDto.inStock === true) {
       queryBuilder.andWhere('product.stock > 0');
     }
 
-    // Rating filter - Handle NULL ratings correctly
+    // Rating filter
     if (searchDto.minRating !== undefined && searchDto.minRating !== null) {
       queryBuilder.andWhere(
         '(product.rating >= :minRating OR product.rating IS NULL)',
-        {
-          minRating: searchDto.minRating,
-        },
+        { minRating: searchDto.minRating },
       );
     }
 
-    // Simple text search on product fields only (no joins)
+    // Simple text search
     if (searchDto.search && searchDto.search.trim().length > 0) {
       const searchTerm = `%${searchDto.search.trim()}%`;
       queryBuilder.andWhere(

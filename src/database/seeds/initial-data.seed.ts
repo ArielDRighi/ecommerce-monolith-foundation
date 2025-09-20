@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User, UserRole } from '../../auth/entities/user.entity';
-import { Category } from '../../products/entities/category.entity';
+import { Category } from '../../categories/entities/category.entity';
 import { Product } from '../../products/entities/product.entity';
 
 export async function runSeeds(dataSource: DataSource) {

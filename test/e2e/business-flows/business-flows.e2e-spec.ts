@@ -9,7 +9,7 @@ import { AppModule } from '../../../src/app.module';
 import { DataSource } from 'typeorm';
 import { User, UserRole } from '../../../src/auth/entities/user.entity';
 import { Product } from '../../../src/products/entities/product.entity';
-import { Category } from '../../../src/products/entities/category.entity';
+import { Category } from '../../../src/categories/entities/category.entity';
 
 describe('Business Flows E2E', () => {
   let app: INestApplication;

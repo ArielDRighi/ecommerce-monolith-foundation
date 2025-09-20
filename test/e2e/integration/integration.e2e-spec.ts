@@ -10,11 +10,13 @@ import request from 'supertest';
 import { AppModule } from '../../../src/app.module';
 import { User, UserRole } from '../../../src/auth/entities/user.entity';
 import { Product } from '../../../src/products/entities/product.entity';
-import { Category } from '../../../src/products/entities/category.entity';
+import { Category } from '../../../src/categories/entities/category.entity';
 import { AuthService } from '../../../src/auth/auth.service';
 import { ProductsService } from '../../../src/products/products.service';
+import { CategoriesService } from '../../../src/categories/categories.service';
 import { RegisterDto } from '../../../src/auth/dto';
-import { CreateProductDto, CreateCategoryDto } from '../../../src/products/dto';
+import { CreateProductDto } from '../../../src/products/dto';
+import { CreateCategoryDto } from '../../../src/categories/dto';
 
 describe('Integration Tests with Real Database', () => {
   let app: INestApplication;
@@ -24,6 +26,7 @@ describe('Integration Tests with Real Database', () => {
   let categoryRepository: Repository<Category>;
   let authService: AuthService;
   let productsService: ProductsService;
+  let categoriesService: CategoriesService;
   let adminUser: User;
   let testCategory: Category;
   let adminToken: string;
@@ -52,6 +55,7 @@ describe('Integration Tests with Real Database', () => {
     );
     authService = app.get<AuthService>(AuthService);
     productsService = app.get<ProductsService>(ProductsService);
+    categoriesService = app.get<CategoriesService>(CategoriesService);
 
     // Clean database before tests
     await dataSource.synchronize(true);
@@ -91,7 +95,7 @@ describe('Integration Tests with Real Database', () => {
       description: 'Category for integration testing',
     };
 
-    const categoryResult = await productsService.createCategory(categoryDto);
+    const categoryResult = await categoriesService.createCategory(categoryDto);
     testCategory = (await categoryRepository.findOne({
       where: { id: categoryResult.id },
     })) as Category;
@@ -565,7 +569,7 @@ describe('Integration Tests with Real Database', () => {
       }));
 
       const categories = await Promise.all(
-        categoryDtos.map((dto) => productsService.createCategory(dto)),
+        categoryDtos.map((dto) => categoriesService.createCategory(dto)),
       );
 
       // Create 30 products through service to ensure proper validation

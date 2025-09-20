@@ -13,12 +13,14 @@
 ### Análisis de Situación Actual
 
 **Fortalezas Confirmadas:**
+
 - ✅ **Performance:** 29 índices, 87% mejora de rendimiento
 - ✅ **Testing:** 482+89 tests, >95% cobertura
 - ✅ **DevOps:** CI/CD pipeline profesional completo
 - ✅ **Documentación:** ADRs detallados y metodología sólida
 
 **Discrepancias Críticas Identificadas:**
+
 - ❌ **README afirma "Clean Architecture"** → Código usa TypeORM directo
 - ❌ **ProductsService 984 líneas** → Viola SRP enormemente
 - ❌ **Mezcla Products + Categories** → Un service maneja 2 dominios
@@ -36,16 +38,20 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
 ## 🚀 Plan de Implementación por Fases
 
 ### **FASE 1: Documentación Honesta y Transparente**
+
 **Duración:** 30 minutos  
 **Prioridad:** Crítica
 
 #### Objetivos
+
 - Alinear documentación con implementación real
 - Eliminar afirmaciones que generan expectativas incorrectas
 - Proyectar honestidad técnica y mejora continua
 
 #### Acciones Específicas
+
 1. **README.md - Sección "Principios de Arquitectura":**
+
    ```markdown
    - **Modular Architecture**: Arquitectura modular enterprise-ready con separación clara por dominio
    - **SOLID Principles**: Aplicados progresivamente (mejoras continuas en desarrollo)
@@ -56,12 +62,14 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
 2. **Agregar sección "Roadmap de Mejoras":**
    ```markdown
    ### 🛠️ Mejoras Continuas en Progreso
+
    - **Service Separation**: Extracción de CategoriesService para cumplir SRP
    - **Dependency Inversion**: Interfaces de repository para mayor flexibilidad
    - **Query Optimization**: Value Objects para encapsular lógica compleja de consultas
    ```
 
 #### Criterios de Aceptación
+
 - [x] Documentación alineada con implementación real
 - [x] Sin afirmaciones técnicas incorrectas
 - [x] Proyección de mejora continua profesional
@@ -69,10 +77,12 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
 ---
 
 ### **FASE 2: Separación de Responsabilidades (SRP Fix)**
+
 **Duración:** 3-4 horas  
 **Prioridad:** Alta
 
 #### Objetivos
+
 - Resolver violación más obvia de Single Responsibility Principle
 - Reducir ProductsService de 984 líneas a ~650 líneas
 - Crear CategoriesService independiente con su dominio
@@ -102,6 +112,7 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
    - `products.service.spec.ts` (remover tests de categorías)
 
 #### Criterios de Aceptación
+
 - [x] ProductsService enfocado únicamente en productos (~650 líneas)
 - [x] CategoriesService independiente y completo
 - [x] API públicas mantienen compatibilidad
@@ -111,10 +122,12 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
 ---
 
 ### **FASE 3: Interfaces de Repository (Dependency Inversion)**
+
 **Duración:** 1-2 días  
 **Prioridad:** Media
 
 #### Objetivos
+
 - Introducir inversión de dependencias básica
 - Abstraer dependencias directas de TypeORM
 - Facilitar testing y futuras extensiones
@@ -122,13 +135,16 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
 #### Acciones Específicas
 
 1. **Crear interfaces de repository:**
+
    ```typescript
    // src/products/interfaces/product-repository.interface.ts
    export interface IProductRepository {
      create(product: Partial<Product>): Promise<Product>;
      findById(id: string): Promise<Product | null>;
      findBySlug(slug: string): Promise<Product | null>;
-     findWithFilters(filters: ProductFilters): Promise<PaginatedResult<Product>>;
+     findWithFilters(
+       filters: ProductFilters,
+     ): Promise<PaginatedResult<Product>>;
      update(id: string, data: Partial<Product>): Promise<Product>;
      softDelete(id: string): Promise<void>;
    }
@@ -144,15 +160,16 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
    ```
 
 2. **Implementar adaptadores TypeORM:**
+
    ```typescript
    // src/products/repositories/typeorm-product.repository.ts
    @Injectable()
    export class TypeOrmProductRepository implements IProductRepository {
      constructor(
        @InjectRepository(Product)
-       private readonly repository: Repository<Product>
+       private readonly repository: Repository<Product>,
      ) {}
-     
+
      // Implementar métodos de interface...
    }
    ```
@@ -167,6 +184,7 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
    - Mantener compatibilidad con tests existentes
 
 #### Criterios de Aceptación
+
 - [x] Services dependen de interfaces, no implementaciones concretas
 - [x] TypeORM encapsulado en adaptadores específicos
 - [x] Dependency injection configurado correctamente
@@ -176,10 +194,12 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
 ---
 
 ### **FASE 4: Value Objects para Queries Complejas (Opcional)**
+
 **Duración:** 2-3 días  
 **Prioridad:** Baja
 
 #### Objetivos
+
 - Encapsular lógica compleja de consultas en objetos específicos
 - Mejorar legibilidad y testabilidad de métodos de búsqueda
 - Aplicar DDD patterns de manera práctica
@@ -187,6 +207,7 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
 #### Acciones Específicas
 
 1. **Crear Value Objects para filtros:**
+
    ```typescript
    // src/products/value-objects/product-search-criteria.ts
    export class ProductSearchCriteria {
@@ -213,6 +234,7 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
    - Mejorar testabilidad de lógica de filtros
 
 #### Criterios de Aceptación
+
 - [x] Lógica de queries encapsulada en Value Objects
 - [x] ProductsService más legible y mantenible
 - [x] Tests unitarios específicos para cada Value Object
@@ -223,17 +245,20 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
 ## 📊 Métricas de Éxito
 
 ### Métricas Técnicas
+
 - **Líneas de código por service:** ProductsService < 650 líneas
 - **Separación de responsabilidades:** 2 services independientes
 - **Cobertura de tests:** Mantener >95%
 - **Performance:** No degradación en tiempos de respuesta
 
 ### Métricas de Calidad
+
 - **Documentación honesta:** 0 discrepancias técnicas
 - **Principios SOLID:** SRP y DIP aplicados correctamente
 - **Maintainability Index:** Mejora en herramientas de análisis
 
 ### Métricas de Valor
+
 - **Tiempo de implementación:** ≤ 1 semana part-time
 - **Compatibilidad API:** 100% backward compatible
 - **Developer Experience:** Código más fácil de entender y extender
@@ -257,6 +282,7 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
    - **Contingencia:** Implementación gradual por módulo
 
 ### Plan de Rollback
+
 - Cada fase tiene su propio commit independiente
 - Posibilidad de revertir fase específica sin afectar otras
 - Backup de configuración actual antes de iniciar
@@ -266,15 +292,18 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
 ## 🎯 Resultado Esperado
 
 ### Estado Final del Proyecto
+
 - **Documentación técnicamente honesta** y alineada con implementación
 - **Separación clara de responsabilidades** entre Products y Categories
 - **Inversión de dependencias básica** para flexibilidad futura
 - **Maintainability mejorado** sin perder fortalezas actuales
 
 ### Narrativa Profesional Resultante
+
 > "Proyecto enfocado en **performance y DevOps** con arquitectura modular enterprise-ready. Aplicación progresiva de principios SOLID con **mejora continua** en separación de responsabilidades y inversión de dependencias. Base sólida preparada para crecimiento y evolución futura."
 
 ### Valor Agregado
+
 - ✅ **Elimina críticas técnicas válidas** sobre SRP y documentación
 - ✅ **Mantiene todas las fortalezas actuales** (performance, testing, DevOps)
 - ✅ **Proyecta profesionalismo técnico** con enfoque pragmático
@@ -284,12 +313,12 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
 
 ## 📅 Timeline de Implementación
 
-| Fase | Duración | Dependencias | Entregables |
-|------|----------|--------------|-------------|
-| **Fase 1** | 30 min | Ninguna | README.md actualizado |
-| **Fase 2** | 3-4 horas | Fase 1 | CategoriesService + tests |
-| **Fase 3** | 1-2 días | Fase 2 | Repository interfaces + adaptadores |
-| **Fase 4** | 2-3 días | Fase 3 | Value Objects (opcional) |
+| Fase       | Duración  | Dependencias | Entregables                         |
+| ---------- | --------- | ------------ | ----------------------------------- |
+| **Fase 1** | 30 min    | Ninguna      | README.md actualizado               |
+| **Fase 2** | 3-4 horas | Fase 1       | CategoriesService + tests           |
+| **Fase 3** | 1-2 días  | Fase 2       | Repository interfaces + adaptadores |
+| **Fase 4** | 2-3 días  | Fase 3       | Value Objects (opcional)            |
 
 **Total:** 1 semana part-time máximo
 
@@ -298,18 +327,21 @@ En lugar de un refactoring completo hacia Clean Architecture (3-4 semanas), apli
 ## 🔧 Herramientas y Metodología
 
 ### Herramientas de Desarrollo
+
 - **GitHub Copilot** para aceleración de código boilerplate
 - **Jest** para testing continuo durante refactoring
 - **TypeScript compiler** para validación de tipos
 - **ESLint** para consistency de código
 
 ### Metodología de Trabajo
+
 1. **Desarrollo incremental** por fases
 2. **Testing continuo** después de cada cambio
 3. **Commits atómicos** por funcionalidad específica
 4. **Code review** automático con herramientas de calidad
 
 ### Validación de Calidad
+
 - Tests unitarios y e2e después de cada fase
 - Performance benchmarks comparativos
 - Análisis estático de código

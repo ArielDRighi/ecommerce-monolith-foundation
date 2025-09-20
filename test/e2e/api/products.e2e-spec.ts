@@ -11,7 +11,7 @@ import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User, UserRole } from '../../../src/auth/entities/user.entity';
 import { Product } from '../../../src/products/entities/product.entity';
-import { Category } from '../../../src/products/entities/category.entity';
+import { Category } from '../../../src/categories/entities/category.entity';
 import { AuthService } from '../../../src/auth/auth.service';
 import { RegisterDto } from '../../../src/auth/dto';
 

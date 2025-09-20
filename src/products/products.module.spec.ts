@@ -2,9 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProductsModule } from './products.module';
 import { ProductsController } from './products.controller';
 import { ProductsService } from './products.service';
+import { CategoriesService } from '../categories/categories.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { Category } from './entities/category.entity';
+import { Category } from '../categories/entities/category.entity';
 
 // Mock TypeORM repositories
 const mockRepository = {
@@ -41,6 +42,17 @@ describe('ProductsModule', () => {
         {
           provide: getRepositoryToken(Category),
           useValue: mockRepository,
+        },
+        {
+          provide: CategoriesService,
+          useValue: {
+            validateCategoryIds: jest.fn(),
+            getAllCategories: jest.fn(),
+            getCategoryById: jest.fn(),
+            createCategory: jest.fn(),
+            updateCategory: jest.fn(),
+            deleteCategory: jest.fn(),
+          },
         },
       ],
     }).compile();
