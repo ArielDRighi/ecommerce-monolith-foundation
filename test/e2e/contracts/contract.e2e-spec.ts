@@ -324,7 +324,7 @@ describe('Contract Testing - API Contracts & Data Schemas', () => {
     beforeAll(async () => {
       // Create test category
       const categoryResponse = await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Contract Test Category',
@@ -644,7 +644,7 @@ describe('Contract Testing - API Contracts & Data Schemas', () => {
   });
 
   describe('Category API Contracts', () => {
-    describe('POST /products/categories', () => {
+    describe('POST /categories', () => {
       it('should have correct request/response contract for category creation', async () => {
         const categoryPayload = {
           name: 'API Contract Category',
@@ -654,7 +654,7 @@ describe('Contract Testing - API Contracts & Data Schemas', () => {
         };
 
         const response = await request(app.getHttpServer())
-          .post('/api/v1/products/categories')
+          .post('/api/v1/categories')
           .set('Authorization', `Bearer ${adminToken}`)
           .send(categoryPayload)
           .expect(201);
@@ -679,10 +679,10 @@ describe('Contract Testing - API Contracts & Data Schemas', () => {
       });
     });
 
-    describe('GET /products/categories', () => {
+    describe('GET /categories', () => {
       it.skip('should have correct response contract for categories list', async () => {
         const response = await request(app.getHttpServer())
-          .get('/api/v1/products/categories')
+          .get('/api/v1/categories')
           .expect(200);
 
         expect(response.body).toMatchObject({

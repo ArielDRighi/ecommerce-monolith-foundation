@@ -453,7 +453,7 @@ describe('Integration Tests with Real Database', () => {
       };
 
       const categoryResponse = await request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${adminToken}`)
         .send(categoryData)
         .expect(201);

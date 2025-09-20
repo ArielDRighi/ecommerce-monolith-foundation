@@ -109,7 +109,7 @@ exports[`Snapshot Testing E2E - API Response Validation Category Response Snapsh
   },
   "meta": {
     "method": "POST",
-    "path": "/api/v1/products/categories",
+    "path": "/api/v1/categories",
     "statusCode": 201,
     "version": "1.0.0",
   },
@@ -127,7 +127,7 @@ exports[`Snapshot Testing E2E - API Response Validation Category Response Snapsh
   },
   "meta": {
     "method": "GET",
-    "path": "/api/v1/products/categories/{uuid}",
+    "path": "/api/v1/categories/{uuid}",
     "statusCode": 200,
     "version": "1.0.0",
   },
@@ -145,7 +145,7 @@ exports[`Snapshot Testing E2E - API Response Validation Category Response Snapsh
   },
   "meta": {
     "method": "PATCH",
-    "path": "/api/v1/products/categories/{uuid}",
+    "path": "/api/v1/categories/{uuid}",
     "statusCode": 200,
     "version": "1.0.0",
   },
@@ -273,14 +273,6 @@ exports[`Snapshot Testing E2E - API Response Validation Pagination Response Snap
         "color": "Red",
         "warranty": "1 year",
       },
-      "categories": [
-        {
-          "description": "Updated description for snapshot testing",
-          "isActive": true,
-          "name": "Updated Snapshot Electronics",
-          "slug": "snapshot-electronics",
-        },
-      ],
       "createdBy": {},
       "description": "Product created for snapshot testing",
       "images": [
@@ -305,14 +297,6 @@ exports[`Snapshot Testing E2E - API Response Validation Pagination Response Snap
         "warranty": "2 years",
         "weight": "1.5kg",
       },
-      "categories": [
-        {
-          "description": "Updated description for snapshot testing",
-          "isActive": true,
-          "name": "Updated Snapshot Electronics",
-          "slug": "snapshot-electronics",
-        },
-      ],
       "createdBy": {},
       "description": "A high-quality product for snapshot testing with consistent data",
       "images": [
@@ -364,7 +348,11 @@ exports[`Snapshot Testing E2E - API Response Validation Product Response Snapsho
         "slug": "snapshot-electronics",
       },
     ],
-    "createdBy": {},
+    "createdBy": {
+      "email": "snapshot-admin@test.com",
+      "firstName": "Snapshot",
+      "lastName": "Admin",
+    },
     "description": "A high-quality product for snapshot testing with consistent data",
     "images": [
       "snapshot-product-1.jpg",
@@ -495,14 +483,6 @@ exports[`Snapshot Testing E2E - API Response Validation Product Response Snapsho
         "color": "Red",
         "warranty": "1 year",
       },
-      "categories": [
-        {
-          "description": "Electronics category for snapshot testing",
-          "isActive": true,
-          "name": "Snapshot Electronics",
-          "slug": "snapshot-electronics",
-        },
-      ],
       "createdBy": {},
       "description": "Product created for snapshot testing",
       "images": [
@@ -527,14 +507,6 @@ exports[`Snapshot Testing E2E - API Response Validation Product Response Snapsho
         "warranty": "2 years",
         "weight": "1.5kg",
       },
-      "categories": [
-        {
-          "description": "Electronics category for snapshot testing",
-          "isActive": true,
-          "name": "Snapshot Electronics",
-          "slug": "snapshot-electronics",
-        },
-      ],
       "createdBy": {},
       "description": "A high-quality product for snapshot testing with consistent data",
       "images": [

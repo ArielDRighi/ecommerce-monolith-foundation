@@ -102,7 +102,7 @@ describe('Performance Testing E2E - Advanced Metrics', () => {
     const categories = ['Electronics', 'Books', 'Clothing', 'Sports', 'Beauty'];
     const categoryPromises = categories.map((name) =>
       request(app.getHttpServer())
-        .post('/api/v1/products/categories')
+        .post('/api/v1/categories')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name,
