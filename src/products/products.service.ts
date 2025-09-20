@@ -9,12 +9,11 @@ import { SelectQueryBuilder, IsNull } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { Product } from './entities/product.entity';
 import { User } from '../auth/entities/user.entity';
+import { ProductSearchCriteria } from './value-objects/product-search-criteria';
 import {
   CreateProductDto,
   UpdateProductDto,
   ProductSearchDto,
-  ProductSortBy,
-  SortOrder,
   ProductResponseDto,
 } from './dto';
 import { CreatedByUserDto } from './dto/product-response.dto';
@@ -201,6 +200,9 @@ export class ProductsService {
     includeUserData: boolean = true,
   ): Promise<PaginatedResult<ProductResponseDto>> {
     try {
+      const searchCriteria = new ProductSearchCriteria(searchDto);
+
+      // Build main query with joins if needed
       const queryBuilder = this.productRepository
         .createQueryBuilder('product')
         .leftJoinAndSelect('product.categories', 'category');
@@ -209,23 +211,17 @@ export class ProductsService {
         queryBuilder.leftJoinAndSelect('product.createdBy', 'createdBy');
       }
 
-      queryBuilder
-        .where('product.deletedAt IS NULL')
-        .andWhere('product.isActive = true');
+      // Apply all search criteria using Value Object
+      searchCriteria.buildQueryBuilder(queryBuilder);
 
-      // Apply filters and sorting
-      this.applySearchFilters(queryBuilder, searchDto);
-      this.applySorting(queryBuilder, searchDto);
-
-      // Get total count using optimized query
+      // Get total count using optimized count query
       let total: number;
       try {
-        const countQueryBuilder = this.productRepository
-          .createQueryBuilder('product')
-          .where('product.deletedAt IS NULL')
-          .andWhere('product.isActive = true');
+        const countQueryBuilder =
+          this.productRepository.createQueryBuilder('product');
 
-        this.applySimpleFiltersForCount(countQueryBuilder, searchDto);
+        // Use simplified criteria for count (no joins for performance)
+        searchCriteria.buildCountQueryBuilder(countQueryBuilder);
         total = await countQueryBuilder.getCount();
       } catch (error) {
         console.warn(
@@ -237,11 +233,8 @@ export class ProductsService {
         });
       }
 
-      // Apply pagination
-      const page = searchDto.page || 1;
-      const limit = Math.min(searchDto.limit || 20, 100);
-      const skip = (page - 1) * limit;
-
+      // Apply pagination using Value Object
+      const { page, limit, skip } = searchCriteria.getPaginationParams();
       queryBuilder.skip(skip).take(limit);
 
       const products = await queryBuilder.getMany();
@@ -296,56 +289,6 @@ export class ProductsService {
     return this.searchProductsBase(searchDto, true);
   }
 
-  private applySearchFilters(
-    queryBuilder: SelectQueryBuilder<Product>,
-    searchDto: ProductSearchDto,
-  ): void {
-    // Text search
-    if (searchDto.search && searchDto.search.trim().length > 0) {
-      const searchTerm = searchDto.search.trim();
-
-      if (searchTerm.length >= 3) {
-        queryBuilder.andWhere(
-          `(
-            to_tsvector('spanish', product.name || ' ' || COALESCE(product.description, '')) 
-            @@ plainto_tsquery('spanish', :searchTerm)
-            OR product.name % :searchTerm
-            OR product.description % :searchTerm
-          )`,
-          { searchTerm },
-        );
-      } else {
-        queryBuilder.andWhere(
-          '(product.name % :searchTerm OR product.description % :searchTerm)',
-          { searchTerm },
-        );
-      }
-    }
-
-    // Category filter
-    if (searchDto.categoryId) {
-      queryBuilder.andWhere('category.id = :categoryId', {
-        categoryId: searchDto.categoryId,
-      });
-    }
-
-    // Price filters
-    this.applyPriceFilters(queryBuilder, searchDto);
-
-    // Stock filter
-    if (searchDto.inStock === true) {
-      queryBuilder.andWhere('product.stock > 0');
-    }
-
-    // Rating filter
-    if (searchDto.minRating !== undefined && searchDto.minRating !== null) {
-      queryBuilder.andWhere(
-        '(product.rating >= :minRating OR product.rating IS NULL)',
-        { minRating: searchDto.minRating },
-      );
-    }
-  }
-
   private applyPriceFilters(
     queryBuilder: SelectQueryBuilder<Product>,
     searchDto: ProductSearchDto,
@@ -366,59 +309,6 @@ export class ProductsService {
           maxPrice: searchDto.maxPrice,
         });
       }
-    }
-  }
-
-  private applySorting(
-    queryBuilder: SelectQueryBuilder<Product>,
-    searchDto: ProductSearchDto,
-  ): void {
-    const sortBy = searchDto.sortBy || ProductSortBy.CREATED_AT;
-    const sortOrder = searchDto.sortOrder || SortOrder.DESC;
-
-    // Optimized sorting using our composite indexes
-    switch (sortBy) {
-      case ProductSortBy.NAME:
-        // Leverages idx_products_name_search
-        queryBuilder.orderBy('product.name', sortOrder);
-        break;
-
-      case ProductSortBy.PRICE:
-        // Leverages idx_products_price_performance
-        queryBuilder.orderBy('product.price', sortOrder);
-        break;
-
-      case ProductSortBy.RATING:
-        // Leverages idx_products_rating_performance with NULLS handling
-        if (sortOrder === SortOrder.DESC) {
-          queryBuilder.orderBy('product.rating', 'DESC', 'NULLS LAST');
-        } else {
-          queryBuilder.orderBy('product.rating', 'ASC', 'NULLS FIRST');
-        }
-        break;
-
-      case ProductSortBy.POPULARITY:
-        // Leverages idx_products_popularity_performance
-        queryBuilder.orderBy('product.orderCount', sortOrder);
-        break;
-
-      case ProductSortBy.VIEWS:
-        // Leverages idx_products_views_performance
-        queryBuilder.orderBy('product.viewCount', sortOrder);
-        break;
-
-      case ProductSortBy.CREATED_AT:
-      default:
-        // Leverages idx_products_recent_active for recent products
-        queryBuilder.orderBy('product.createdAt', sortOrder);
-        break;
-    }
-
-    // Enhanced secondary sorting for consistent results
-    // Use composite indexes for better performance
-    if (sortBy !== ProductSortBy.CREATED_AT) {
-      // Add secondary sort by id for consistency (uses primary key index)
-      queryBuilder.addOrderBy('product.id', 'ASC');
     }
   }
 
@@ -618,38 +508,5 @@ export class ProductsService {
    */
   async getProductBySlugPublic(slug: string): Promise<ProductResponseDto> {
     return this.getProductBySlug(slug, false);
-  }
-
-  /**
-   * Simple filters for count queries
-   */
-  private applySimpleFiltersForCount(
-    queryBuilder: SelectQueryBuilder<Product>,
-    searchDto: ProductSearchDto,
-  ): void {
-    // Price filters
-    this.applyPriceFilters(queryBuilder, searchDto);
-
-    // Stock filter
-    if (searchDto.inStock === true) {
-      queryBuilder.andWhere('product.stock > 0');
-    }
-
-    // Rating filter
-    if (searchDto.minRating !== undefined && searchDto.minRating !== null) {
-      queryBuilder.andWhere(
-        '(product.rating >= :minRating OR product.rating IS NULL)',
-        { minRating: searchDto.minRating },
-      );
-    }
-
-    // Simple text search
-    if (searchDto.search && searchDto.search.trim().length > 0) {
-      const searchTerm = `%${searchDto.search.trim()}%`;
-      queryBuilder.andWhere(
-        '(product.name ILIKE :searchTerm OR product.description ILIKE :searchTerm)',
-        { searchTerm },
-      );
-    }
   }
 }
