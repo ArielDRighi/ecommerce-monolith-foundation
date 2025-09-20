@@ -17,17 +17,18 @@ Cada ADR sigue esta estructura:
 
 ## ADRs en este Proyecto
 
-| ADR                                                | Título                                      | Estado   | Fecha      |
-| -------------------------------------------------- | ------------------------------------------- | -------- | ---------- |
-| [ADR-001](./001-monolithic-architecture.md)        | Adopción de Arquitectura Monolítica         | Aceptado | 2025-09-18 |
-| [ADR-002](./002-technology-stack-selection.md)     | Selección de Stack Tecnológico              | Aceptado | 2025-09-18 |
-| [ADR-003](./003-database-optimization-strategy.md) | Estrategia de Optimización de Base de Datos | Aceptado | 2025-09-18 |
-| [ADR-004](./004-authentication-architecture.md)    | Arquitectura de Autenticación               | Aceptado | 2025-09-18 |
-| [ADR-005](./005-testing-strategy.md)               | Estrategia de Testing Enterprise            | Aceptado | 2025-09-18 |
-| [ADR-006](./006-containerization-strategy.md)      | Estrategia de Containerización              | Aceptado | 2025-09-18 |
-| [ADR-007](./007-ci-cd-pipeline-architecture.md)    | CI/CD Pipeline Architecture                 | Aceptado | 2025-09-18 |
-| [ADR-008](./008-logging-monitoring-strategy.md)    | Logging and Monitoring Strategy             | Aceptado | 2025-09-18 |
-| [ADR-009](./009-database-design-architecture.md)   | Database Design and Schema Architecture     | Aceptado | 2025-09-18 |
+| ADR                                                      | Título                                                    | Estado   | Fecha      |
+| -------------------------------------------------------- | --------------------------------------------------------- | -------- | ---------- |
+| [ADR-001](./001-monolithic-architecture.md)              | Adopción de Arquitectura Monolítica                       | Aceptado | 2025-09-18 |
+| [ADR-002](./002-technology-stack-selection.md)           | Selección de Stack Tecnológico                            | Aceptado | 2025-09-18 |
+| [ADR-003](./003-database-optimization-strategy.md)       | Estrategia de Optimización de Base de Datos               | Aceptado | 2025-09-18 |
+| [ADR-004](./004-authentication-architecture.md)          | Arquitectura de Autenticación                             | Aceptado | 2025-09-18 |
+| [ADR-005](./005-testing-strategy.md)                     | Estrategia de Testing Enterprise                          | Aceptado | 2025-09-18 |
+| [ADR-006](./006-containerization-strategy.md)            | Estrategia de Containerización                            | Aceptado | 2025-09-18 |
+| [ADR-007](./007-ci-cd-pipeline-architecture.md)          | CI/CD Pipeline Architecture                               | Aceptado | 2025-09-18 |
+| [ADR-008](./008-logging-monitoring-strategy.md)          | Logging and Monitoring Strategy                           | Aceptado | 2025-09-18 |
+| [ADR-009](./009-database-design-architecture.md)         | Database Design and Schema Architecture                   | Aceptado | 2025-09-18 |
+| [ADR-010](./010-strategic-refactoring-implementation.md) | Refactorización Estratégica para Mejora de Mantenibilidad | Aceptado | 2025-09-20 |
 
 ## Cómo Leer los ADRs
 
