@@ -21,18 +21,14 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { ProductsService, PaginatedResult } from './products.service';
-import { CategoriesService } from '../categories/categories.service';
 import {
   CreateProductDto,
   UpdateProductDto,
   ProductSearchDto,
   ProductResponseDto,
+  ProductSortBy,
+  SortOrder,
 } from './dto';
-import {
-  CreateCategoryDto,
-  UpdateCategoryDto,
-  CategoryResponseDto,
-} from '../categories/dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -42,10 +38,7 @@ import { User, UserRole } from '../auth/entities/user.entity';
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
-  constructor(
-    private readonly productsService: ProductsService,
-    private readonly categoriesService: CategoriesService,
-  ) {}
+  constructor(private readonly productsService: ProductsService) {}
 
   // ==============================
   // ADMIN ONLY ENDPOINTS
@@ -69,22 +62,111 @@ export class ProductsController {
     description: 'Bad request - validation errors or category not found',
   })
   @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - invalid or missing JWT token',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - insufficient permissions (requires ADMIN role)',
-  })
-  @ApiResponse({
     status: 409,
-    description: 'Conflict - product slug already exists',
+    description: 'Conflict - product with this slug already exists',
   })
   async createProduct(
     @Body() createProductDto: CreateProductDto,
     @CurrentUser() user: User,
   ): Promise<ProductResponseDto> {
     return this.productsService.createProduct(createProductDto, user);
+  }
+
+  @Get('admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Get all products for admin (including inactive)',
+    description:
+      'Get all products with admin-specific information including inactive products, ' +
+      'advanced filtering, and extended metadata. Supports pagination and filtering.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (starting from 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of items per page (max 100)',
+    example: 20,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Search term for name and description',
+    example: 'laptop',
+  })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    description: 'Filter by category slug',
+    example: 'electronics',
+  })
+  @ApiQuery({
+    name: 'minPrice',
+    required: false,
+    description: 'Minimum price filter',
+    example: 100,
+  })
+  @ApiQuery({
+    name: 'maxPrice',
+    required: false,
+    description: 'Maximum price filter',
+    example: 1000,
+  })
+  @ApiQuery({
+    name: 'isActive',
+    required: false,
+    description: 'Filter by active status',
+    example: true,
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    description: 'Sort field',
+    enum: ['name', 'price', 'createdAt', 'updatedAt', 'stock', 'rating'],
+    example: 'createdAt',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    description: 'Sort order',
+    enum: ['ASC', 'DESC'],
+    example: 'DESC',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Products retrieved successfully',
+    type: ProductResponseDto,
+    isArray: true,
+  })
+  async getProductsAdmin(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+    @Query('minPrice') minPrice?: number,
+    @Query('maxPrice') maxPrice?: number,
+    @Query('isActive') isActive?: boolean,
+    @Query('sortBy') sortBy?: ProductSortBy,
+    @Query('sortOrder') sortOrder?: SortOrder,
+  ): Promise<PaginatedResult<ProductResponseDto>> {
+    const searchDto: ProductSearchDto = {
+      page,
+      limit,
+      search,
+      categoryId: category,
+      minPrice,
+      maxPrice,
+      sortBy,
+      sortOrder,
+    };
+
+    return this.productsService.searchProducts(searchDto);
   }
 
   @Patch(':id')
@@ -111,20 +193,12 @@ export class ProductsController {
     description: 'Bad request - validation errors',
   })
   @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - invalid or missing JWT token',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - insufficient permissions (requires ADMIN role)',
-  })
-  @ApiResponse({
     status: 404,
     description: 'Product not found',
   })
   @ApiResponse({
     status: 409,
-    description: 'Conflict - product slug already exists',
+    description: 'Conflict - product with this slug already exists',
   })
   async updateProduct(
     @Param('id', ParseUUIDPipe) id: string,
@@ -139,8 +213,10 @@ export class ProductsController {
   @ApiBearerAuth('access-token')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Delete a product',
-    description: 'Soft deletes a product. Requires ADMIN role.',
+    summary: 'Delete a product (soft delete)',
+    description:
+      'Performs a soft delete on a product. Requires ADMIN role. ' +
+      'The product will be marked as deleted but data will be preserved.',
   })
   @ApiParam({
     name: 'id',
@@ -151,14 +227,6 @@ export class ProductsController {
   @ApiResponse({
     status: 204,
     description: 'Product deleted successfully',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - invalid or missing JWT token',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - insufficient permissions (requires ADMIN role)',
   })
   @ApiResponse({
     status: 404,
@@ -174,131 +242,89 @@ export class ProductsController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get all products with pagination',
+    summary: 'Get all active products with filtering',
     description:
       'Get all active products with optional filtering by category and price range. ' +
-      'Supports pagination and returns detailed product information.',
+      'Supports pagination and sorting. Optimized for public consumption.',
   })
   @ApiQuery({
     name: 'page',
     required: false,
-    description: 'Page number (starts at 1)',
-    type: Number,
+    description: 'Page number (starting from 1)',
     example: 1,
   })
   @ApiQuery({
     name: 'limit',
     required: false,
-    description: 'Number of products per page (max 100)',
-    type: Number,
+    description: 'Number of items per page (max 100)',
     example: 20,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Search term for name and description',
+    example: 'laptop',
   })
   @ApiQuery({
     name: 'category',
     required: false,
     description: 'Filter by category slug',
-    type: String,
     example: 'electronics',
   })
   @ApiQuery({
     name: 'minPrice',
     required: false,
     description: 'Minimum price filter',
-    type: Number,
-    example: 50,
+    example: 100,
   })
   @ApiQuery({
     name: 'maxPrice',
     required: false,
     description: 'Maximum price filter',
-    type: Number,
-    example: 500,
+    example: 1000,
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    description: 'Sort field',
+    enum: ['name', 'price', 'createdAt', 'rating', 'popularity'],
+    example: 'createdAt',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    description: 'Sort order',
+    enum: ['ASC', 'DESC'],
+    example: 'DESC',
   })
   @ApiResponse({
     status: 200,
     description: 'Products retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: { $ref: '#/components/schemas/ProductResponseDto' },
-        },
-        total: { type: 'number', example: 150 },
-        page: { type: 'number', example: 1 },
-        limit: { type: 'number', example: 20 },
-        totalPages: { type: 'number', example: 8 },
-      },
-    },
+    type: ProductResponseDto,
+    isArray: true,
   })
-  async getAllProducts(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+  async getProductsPublic(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
     @Query('category') category?: string,
     @Query('minPrice') minPrice?: number,
     @Query('maxPrice') maxPrice?: number,
+    @Query('sortBy') sortBy?: ProductSortBy,
+    @Query('sortOrder') sortOrder?: SortOrder,
   ): Promise<PaginatedResult<ProductResponseDto>> {
-    // Ensure minimum values and maximum limits
-    const safePage = Math.max(1, page || 1);
-    const safeLimit = Math.min(100, Math.max(1, limit || 20));
-
-    return this.productsService.getAllProducts({
-      page: safePage,
-      limit: safeLimit,
-      category,
+    const searchDto: ProductSearchDto = {
+      page,
+      limit,
+      search,
+      categoryId: category,
       minPrice,
       maxPrice,
-    });
-  }
+      sortBy,
+      sortOrder,
+    };
 
-  @Get('popular')
-  @ApiOperation({
-    summary: 'Get popular products',
-    description:
-      'High-performance endpoint to get popular/trending products based on order count and views. ' +
-      'Leverages optimized database indexes for fast retrieval.',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    description: 'Number of products to return (max 50)',
-    type: Number,
-    example: 10,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Popular products retrieved successfully',
-    type: [ProductResponseDto],
-  })
-  async getPopularProducts(
-    @Query('limit') limit?: number,
-  ): Promise<ProductResponseDto[]> {
-    return this.productsService.getPopularProducts(limit);
-  }
-
-  @Get('recent')
-  @ApiOperation({
-    summary: 'Get recently added products',
-    description:
-      'High-performance endpoint to get recently added products. ' +
-      'Leverages optimized database indexes for fast retrieval.',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    description: 'Number of products to return (max 50)',
-    type: Number,
-    example: 10,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Recent products retrieved successfully',
-    type: [ProductResponseDto],
-  })
-  async getRecentProducts(
-    @Query('limit') limit?: number,
-  ): Promise<ProductResponseDto[]> {
-    return this.productsService.getRecentProducts(limit);
+    return this.productsService.searchProductsPublic(searchDto);
   }
 
   @Get('category/:categoryId')
@@ -317,33 +343,34 @@ export class ProductsController {
   @ApiQuery({
     name: 'page',
     required: false,
-    description: 'Page number (1-based)',
-    type: Number,
+    description: 'Page number (starting from 1)',
     example: 1,
   })
   @ApiQuery({
     name: 'limit',
     required: false,
     description: 'Number of items per page (max 100)',
-    type: Number,
     example: 20,
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    description: 'Sort field',
+    enum: ['name', 'price', 'createdAt', 'rating'],
+    example: 'name',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    description: 'Sort order',
+    enum: ['ASC', 'DESC'],
+    example: 'ASC',
   })
   @ApiResponse({
     status: 200,
-    description: 'Category products retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: { $ref: '#/components/schemas/ProductResponseDto' },
-        },
-        total: { type: 'number', example: 45 },
-        page: { type: 'number', example: 1 },
-        limit: { type: 'number', example: 20 },
-        totalPages: { type: 'number', example: 3 },
-      },
-    },
+    description: 'Products retrieved successfully',
+    type: ProductResponseDto,
+    isArray: true,
   })
   @ApiResponse({
     status: 404,
@@ -361,14 +388,14 @@ export class ProductsController {
   @ApiOperation({
     summary: 'Get product by slug',
     description:
-      'High-performance endpoint to get a product by its slug. ' +
-      'Optimized using unique slug index and increments view count automatically.',
+      'Publicly accessible endpoint to get a product by its slug. ' +
+      'Increments view count automatically. SEO-friendly endpoint.',
   })
   @ApiParam({
     name: 'slug',
-    description: 'Product slug (URL-friendly identifier)',
+    description: 'Product slug',
     type: 'string',
-    example: 'gaming-laptop-pro-2024',
+    example: 'laptop-gaming-asus-rog-2024',
   })
   @ApiResponse({
     status: 200,
@@ -382,64 +409,70 @@ export class ProductsController {
   async getProductBySlug(
     @Param('slug') slug: string,
   ): Promise<ProductResponseDto> {
-    return this.productsService.getProductBySlugPublic(slug);
+    return this.productsService.getProductBySlug(slug);
   }
 
   @Get('search')
   @ApiOperation({
-    summary: 'Search products with filters and pagination',
+    summary: 'Search products with advanced filtering',
     description:
-      'Publicly accessible endpoint to search and filter products with pagination. ' +
-      'Supports text search, category filtering, price range, stock status, and rating filters.',
+      'Advanced product search with full-text search, filtering, and sorting. ' +
+      'Optimized for search performance using specialized indexes and pagination.',
   })
   @ApiQuery({
-    name: 'search',
+    name: 'q',
     required: false,
-    description: 'Search term for product name or description',
-    type: String,
-    example: 'macbook',
+    description: 'Search query for product name and description',
+    example: 'gaming laptop',
   })
   @ApiQuery({
-    name: 'categoryId',
+    name: 'category',
     required: false,
-    description: 'Category UUID to filter products',
-    type: String,
-    format: 'uuid',
+    description: 'Filter by category slug',
+    example: 'electronics',
   })
   @ApiQuery({
     name: 'minPrice',
     required: false,
     description: 'Minimum price filter',
-    type: Number,
-    example: 30,
+    example: 500,
   })
   @ApiQuery({
     name: 'maxPrice',
     required: false,
     description: 'Maximum price filter',
-    type: Number,
-    example: 3000,
+    example: 2000,
   })
   @ApiQuery({
     name: 'inStock',
     required: false,
-    description: 'Filter only products in stock',
-    type: Boolean,
+    description: 'Filter products in stock only',
     example: true,
   })
   @ApiQuery({
     name: 'minRating',
     required: false,
     description: 'Minimum rating filter (0-5)',
-    type: Number,
     example: 4,
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (starting from 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of items per page (max 100)',
+    example: 20,
   })
   @ApiQuery({
     name: 'sortBy',
     required: false,
     description: 'Sort field',
-    enum: ['name', 'price', 'createdAt', 'rating', 'popularity', 'viewCount'],
-    example: 'price',
+    enum: ['relevance', 'name', 'price', 'rating', 'createdAt'],
+    example: 'relevance',
   })
   @ApiQuery({
     name: 'sortOrder',
@@ -448,36 +481,11 @@ export class ProductsController {
     enum: ['ASC', 'DESC'],
     example: 'DESC',
   })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    description: 'Page number (1-based)',
-    type: Number,
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    description: 'Number of items per page (max 100)',
-    type: Number,
-    example: 20,
-  })
   @ApiResponse({
     status: 200,
-    description: 'Products retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: { $ref: '#/components/schemas/ProductResponseDto' },
-        },
-        total: { type: 'number', example: 150 },
-        page: { type: 'number', example: 1 },
-        limit: { type: 'number', example: 20 },
-        totalPages: { type: 'number', example: 8 },
-      },
-    },
+    description: 'Search completed successfully',
+    type: ProductResponseDto,
+    isArray: true,
   })
   @ApiResponse({
     status: 400,
@@ -487,173 +495,6 @@ export class ProductsController {
     @Query() searchDto: ProductSearchDto,
   ): Promise<PaginatedResult<ProductResponseDto>> {
     return this.productsService.searchProductsPublic(searchDto);
-  }
-
-  // ==============================
-  // CATEGORY ENDPOINTS (PUBLIC & ADMIN)
-  // ==============================
-
-  @Get('categories')
-  @ApiOperation({
-    summary: 'Get all categories',
-    description:
-      'Publicly accessible endpoint to get all active categories, sorted by name.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Categories retrieved successfully',
-    type: [CategoryResponseDto],
-  })
-  async getAllCategories(): Promise<CategoryResponseDto[]> {
-    return this.categoriesService.getAllCategories();
-  }
-
-  @Get('categories/:id')
-  @ApiOperation({
-    summary: 'Get category by ID',
-    description:
-      'Publicly accessible endpoint to get a specific category by its ID.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Category UUID',
-    type: 'string',
-    format: 'uuid',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Category retrieved successfully',
-    type: CategoryResponseDto,
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Category not found or inactive',
-  })
-  async getCategoryById(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<CategoryResponseDto> {
-    return this.categoriesService.getCategoryById(id);
-  }
-
-  @Post('categories')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiBearerAuth('access-token')
-  @ApiOperation({
-    summary: 'Create a new category',
-    description: 'Creates a new product category. Requires ADMIN role.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Category created successfully',
-    type: CategoryResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request - validation errors',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - invalid or missing JWT token',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - insufficient permissions (requires ADMIN role)',
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'Conflict - category slug already exists',
-  })
-  async createCategory(
-    @Body() createCategoryDto: CreateCategoryDto,
-  ): Promise<CategoryResponseDto> {
-    return this.categoriesService.createCategory(createCategoryDto);
-  }
-
-  @Patch('categories/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiBearerAuth('access-token')
-  @ApiOperation({
-    summary: 'Update a category',
-    description: 'Updates an existing category. Requires ADMIN role.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Category UUID',
-    type: 'string',
-    format: 'uuid',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Category updated successfully',
-    type: CategoryResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request - validation errors',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - invalid or missing JWT token',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - insufficient permissions (requires ADMIN role)',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Category not found',
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'Conflict - category slug already exists',
-  })
-  async updateCategory(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateCategoryDto: UpdateCategoryDto,
-  ): Promise<CategoryResponseDto> {
-    return this.categoriesService.updateCategory(id, updateCategoryDto);
-  }
-
-  @Delete('categories/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiBearerAuth('access-token')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({
-    summary: 'Delete a category',
-    description:
-      'Soft deletes a category. Cannot delete if category contains products. Requires ADMIN role.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Category UUID',
-    type: 'string',
-    format: 'uuid',
-  })
-  @ApiResponse({
-    status: 204,
-    description: 'Category deleted successfully',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request - category contains products',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - invalid or missing JWT token',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - insufficient permissions (requires ADMIN role)',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Category not found',
-  })
-  async deleteCategory(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.categoriesService.deleteCategory(id);
   }
 
   @Get(':id')

@@ -4,6 +4,7 @@ import { Category } from './entities/category.entity';
 import { CategoriesService } from './categories.service';
 import { CategoriesController } from './categories.controller';
 import { TypeOrmCategoryRepository } from './repositories/typeorm-category.repository';
+import { DI_TOKENS } from '../common/tokens/di-tokens';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Category])],
@@ -11,10 +12,16 @@ import { TypeOrmCategoryRepository } from './repositories/typeorm-category.repos
   providers: [
     CategoriesService,
     {
-      provide: 'ICategoryRepository',
+      provide: DI_TOKENS.ICategoryRepository,
       useClass: TypeOrmCategoryRepository,
     },
   ],
-  exports: [CategoriesService], // Export service for use in ProductsModule
+  exports: [
+    CategoriesService,
+    {
+      provide: DI_TOKENS.ICategoryRepository,
+      useClass: TypeOrmCategoryRepository,
+    },
+  ], // Export service and repository for use in ProductsModule
 })
 export class CategoriesModule {}

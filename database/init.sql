@@ -21,7 +21,7 @@ BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
 -- Tabla de usuarios (para referencia)
 CREATE TABLE IF NOT EXISTS users (
@@ -97,10 +97,24 @@ CREATE INDEX IF NOT EXISTS IDX_products_stock ON products(stock) WHERE stock > 0
 CREATE INDEX IF NOT EXISTS IDX_product_categories_product ON product_categories(product_id);
 CREATE INDEX IF NOT EXISTS IDX_product_categories_category ON product_categories(category_id);
 
--- Triggers para updated_at
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
-CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
-CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+-- Triggers para updated_at (sintaxis compatible con PostgreSQL 9.1+)
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+CREATE TRIGGER update_users_updated_at 
+    BEFORE UPDATE ON users 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_categories_updated_at ON categories;
+CREATE TRIGGER update_categories_updated_at 
+    BEFORE UPDATE ON categories 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_products_updated_at ON products;
+CREATE TRIGGER update_products_updated_at 
+    BEFORE UPDATE ON products 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Datos iniciales para categorías
 INSERT INTO categories (name, slug, description, sort_order) VALUES

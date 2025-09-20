@@ -15,13 +15,14 @@ import {
   CategoryResponseDto,
 } from './dto';
 import { ICategoryRepository } from './interfaces/category-repository.interface';
+import { DI_TOKENS } from '../common/tokens/di-tokens';
 
 @Injectable()
 export class CategoriesService {
   private readonly logger = new Logger(CategoriesService.name);
 
   constructor(
-    @Inject('ICategoryRepository')
+    @Inject(DI_TOKENS.ICategoryRepository)
     private readonly categoryRepository: ICategoryRepository,
   ) {}
 

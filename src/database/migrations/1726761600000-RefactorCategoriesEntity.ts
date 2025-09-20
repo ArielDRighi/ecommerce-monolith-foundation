@@ -75,10 +75,11 @@ export class RefactorCategoriesEntity1726761600000
 
     // 6. Add categories metadata for enhanced functionality
     await queryRunner.query(`
-      -- Add trigger for category updated_at
-      CREATE TRIGGER IF NOT EXISTS "update_categories_updated_at" 
+      -- Add trigger for category updated_at (compatible syntax)
+      DROP TRIGGER IF EXISTS "update_categories_updated_at" ON "categories";
+      CREATE TRIGGER "update_categories_updated_at" 
       BEFORE UPDATE ON "categories" 
-      FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
     `);
 
     // 7. Update table statistics for optimal query planning

@@ -2,12 +2,14 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
   Logger,
   Inject,
 } from '@nestjs/common';
-import { SelectQueryBuilder, IsNull } from 'typeorm';
+import { SelectQueryBuilder, IsNull, In } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { Product } from './entities/product.entity';
+import { Category } from '../categories/entities/category.entity';
 import { User } from '../auth/entities/user.entity';
 import { ProductSearchCriteria } from './value-objects/product-search-criteria';
 import {
@@ -17,8 +19,9 @@ import {
   ProductResponseDto,
 } from './dto';
 import { CreatedByUserDto } from './dto/product-response.dto';
-import { CategoriesService } from '../categories/categories.service';
 import { IProductRepository } from './interfaces/product-repository.interface';
+import { ICategoryRepository } from '../categories/interfaces/category-repository.interface';
+import { DI_TOKENS } from '../common/tokens/di-tokens';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -33,9 +36,10 @@ export class ProductsService {
   private readonly logger = new Logger(ProductsService.name);
 
   constructor(
-    @Inject('IProductRepository')
+    @Inject(DI_TOKENS.IProductRepository)
     private readonly productRepository: IProductRepository,
-    private readonly categoriesService: CategoriesService,
+    @Inject(DI_TOKENS.ICategoryRepository)
+    private readonly categoryRepository: ICategoryRepository,
   ) {}
 
   // #region PRODUCT CRUD METHODS (ADMIN ONLY)
@@ -55,8 +59,8 @@ export class ProductsService {
       );
     }
 
-    // Verify that all category IDs exist using CategoriesService
-    const categories = await this.categoriesService.validateCategoryIds(
+    // Verify that all category IDs exist and are active
+    const categories = await this.validateCategoryIds(
       createProductDto.categoryIds,
     );
 
@@ -202,17 +206,11 @@ export class ProductsService {
     try {
       const searchCriteria = new ProductSearchCriteria(searchDto);
 
-      // Build main query with joins if needed
-      const queryBuilder = this.productRepository
-        .createQueryBuilder('product')
-        .leftJoinAndSelect('product.categories', 'category');
+      // Build main query - let criteria handle its own joins
+      const queryBuilder = this.productRepository.createQueryBuilder('product');
 
-      if (includeUserData) {
-        queryBuilder.leftJoinAndSelect('product.createdBy', 'createdBy');
-      }
-
-      // Apply all search criteria using Value Object
-      searchCriteria.buildQueryBuilder(queryBuilder);
+      // Apply all search criteria using Value Object (self-contained)
+      searchCriteria.buildQueryBuilder(queryBuilder, includeUserData);
 
       // Get total count using optimized count query
       let total: number;
@@ -509,4 +507,43 @@ export class ProductsService {
   async getProductBySlugPublic(slug: string): Promise<ProductResponseDto> {
     return this.getProductBySlug(slug, false);
   }
+
+  // #region HELPER METHODS
+
+  /**
+   * Validates that all provided category IDs exist and are active
+   */
+  private async validateCategoryIds(
+    categoryIds: string[],
+  ): Promise<Category[]> {
+    this.logger.log(`Validating ${categoryIds.length} category IDs`);
+
+    if (!categoryIds || categoryIds.length === 0) {
+      return [];
+    }
+
+    const categories = await this.categoryRepository.find({
+      where: {
+        id: In(categoryIds),
+        deletedAt: IsNull(),
+        isActive: true,
+      },
+    });
+
+    if (categories.length !== categoryIds.length) {
+      const foundIds = categories.map((category) => category.id);
+      const missingIds = categoryIds.filter((id) => !foundIds.includes(id));
+
+      throw new BadRequestException(
+        `Categories not found or inactive: ${missingIds.join(', ')}`,
+      );
+    }
+
+    this.logger.log(
+      `All ${categoryIds.length} categories validated successfully`,
+    );
+    return categories;
+  }
+
+  // #endregion
 }

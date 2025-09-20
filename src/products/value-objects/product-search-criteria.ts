@@ -15,10 +15,15 @@ export class ProductSearchCriteria {
 
   /**
    * Main method that applies all filters and sorting to the query builder
+   * Now handles its own joins for self-containment
    */
   buildQueryBuilder(
     queryBuilder: SelectQueryBuilder<Product>,
+    includeUserData: boolean = true,
   ): SelectQueryBuilder<Product> {
+    // Apply necessary joins based on what filters require
+    this.applyRequiredJoins(queryBuilder, includeUserData);
+
     this.applyBasicFilters(queryBuilder);
     this.applySearchFilters(queryBuilder);
     this.applyCategoryFilter(queryBuilder);
@@ -48,6 +53,25 @@ export class ProductSearchCriteria {
     queryBuilder
       .where('product.deletedAt IS NULL')
       .andWhere('product.isActive = true');
+  }
+
+  /**
+   * Apply necessary joins based on what filters require
+   * Self-contained to avoid external configuration
+   */
+  private applyRequiredJoins(
+    queryBuilder: SelectQueryBuilder<Product>,
+    includeUserData: boolean = true,
+  ): void {
+    // Join categories if category filter is present
+    if (this.filters.categoryId) {
+      queryBuilder.leftJoinAndSelect('product.categories', 'category');
+    }
+
+    // Join user data if requested (for admin views)
+    if (includeUserData) {
+      queryBuilder.leftJoinAndSelect('product.createdBy', 'createdBy');
+    }
   }
 
   /**

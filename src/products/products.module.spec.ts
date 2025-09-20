@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProductsModule } from './products.module';
 import { ProductsController } from './products.controller';
 import { ProductsService } from './products.service';
-import { CategoriesService } from '../categories/categories.service';
+import { DI_TOKENS } from '../common/tokens/di-tokens';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Category } from '../categories/entities/category.entity';
@@ -46,8 +46,12 @@ describe('ProductsModule', () => {
       providers: [
         ProductsService,
         {
-          provide: 'IProductRepository',
+          provide: DI_TOKENS.IProductRepository,
           useValue: mockProductRepository,
+        },
+        {
+          provide: DI_TOKENS.ICategoryRepository,
+          useValue: mockCategoryRepository,
         },
         {
           provide: getRepositoryToken(Product),
@@ -56,17 +60,6 @@ describe('ProductsModule', () => {
         {
           provide: getRepositoryToken(Category),
           useValue: mockCategoryRepository,
-        },
-        {
-          provide: CategoriesService,
-          useValue: {
-            validateCategoryIds: jest.fn(),
-            getAllCategories: jest.fn(),
-            getCategoryById: jest.fn(),
-            createCategory: jest.fn(),
-            updateCategory: jest.fn(),
-            deleteCategory: jest.fn(),
-          },
         },
       ],
     }).compile();

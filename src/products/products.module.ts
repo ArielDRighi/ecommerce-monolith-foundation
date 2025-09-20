@@ -5,6 +5,7 @@ import { ProductsController } from './products.controller';
 import { Product } from './entities/product.entity';
 import { CategoriesModule } from '../categories/categories.module';
 import { TypeOrmProductRepository } from './repositories/typeorm-product.repository';
+import { DI_TOKENS } from '../common/tokens/di-tokens';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { TypeOrmProductRepository } from './repositories/typeorm-product.reposit
   providers: [
     ProductsService,
     {
-      provide: 'IProductRepository',
+      provide: DI_TOKENS.IProductRepository,
       useClass: TypeOrmProductRepository,
     },
   ],

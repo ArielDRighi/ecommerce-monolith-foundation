@@ -7,9 +7,10 @@ import { NotFoundException } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { Product } from './entities/product.entity';
 import { Category } from '../categories/entities/category.entity';
-import { CategoriesService } from '../categories/categories.service';
 import { User, UserRole } from '../auth/entities/user.entity';
 import { IProductRepository } from './interfaces/product-repository.interface';
+import { ICategoryRepository } from '../categories/interfaces/category-repository.interface';
+import { DI_TOKENS } from '../common/tokens/di-tokens';
 import type {
   CreateProductDto,
   UpdateProductDto,
@@ -19,7 +20,7 @@ import type {
 describe('ProductsService', () => {
   let service: ProductsService;
   let productRepository: IProductRepository;
-  let categoriesService: CategoriesService;
+  let categoryRepository: ICategoryRepository;
 
   // Mock data
   const mockUser = {
@@ -84,7 +85,7 @@ describe('ProductsService', () => {
       providers: [
         ProductsService,
         {
-          provide: 'IProductRepository',
+          provide: DI_TOKENS.IProductRepository,
           useValue: {
             create: jest.fn(),
             save: jest.fn(),
@@ -98,22 +99,21 @@ describe('ProductsService', () => {
           },
         },
         {
-          provide: CategoriesService,
+          provide: DI_TOKENS.ICategoryRepository,
           useValue: {
-            validateCategoryIds: jest.fn().mockResolvedValue([mockCategory]),
-            getAllCategories: jest.fn(),
-            getCategoryById: jest.fn(),
-            createCategory: jest.fn(),
-            updateCategory: jest.fn(),
-            deleteCategory: jest.fn(),
+            find: jest.fn().mockResolvedValue([mockCategory]),
+            findOne: jest.fn(),
+            create: jest.fn(),
+            save: jest.fn(),
+            count: jest.fn(),
           },
         },
       ],
     }).compile();
 
     service = module.get<ProductsService>(ProductsService);
-    productRepository = module.get('IProductRepository');
-    categoriesService = module.get<CategoriesService>(CategoriesService);
+    productRepository = module.get(DI_TOKENS.IProductRepository);
+    categoryRepository = module.get(DI_TOKENS.ICategoryRepository);
 
     // Clear all mocks after module setup
     jest.clearAllMocks();
@@ -131,10 +131,8 @@ describe('ProductsService', () => {
         .mockResolvedValueOnce(null) // for slug check
         .mockResolvedValueOnce(mockProduct); // for fetching with relations
 
-      // Mock category validation
-      jest
-        .spyOn(categoriesService, 'validateCategoryIds')
-        .mockResolvedValue([mockCategory]);
+      // Mock category validation - mock the repository directly
+      jest.spyOn(categoryRepository, 'find').mockResolvedValue([mockCategory]);
 
       // Mock product creation and saving
       jest.spyOn(productRepository, 'create').mockReturnValue(mockProduct);

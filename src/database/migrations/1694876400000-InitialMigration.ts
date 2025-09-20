@@ -150,7 +150,7 @@ export class InitialMigration1694876400000 implements MigrationInterface {
           NEW.updated_at = CURRENT_TIMESTAMP;
           RETURN NEW;
       END;
-      $$ language 'plpgsql'
+      $$ LANGUAGE plpgsql
     `);
 
     // Apply updated_at triggers

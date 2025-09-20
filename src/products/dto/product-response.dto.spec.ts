@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { plainToClass } from 'class-transformer';
-import {
-  ProductResponseDto,
-  CategoryResponseDto,
-} from './product-response.dto';
+import { ProductResponseDto } from './product-response.dto';
+import { CategoryResponseDto } from '../../categories/dto/category-response.dto';
 
 describe('ProductResponseDto', () => {
   let product: ProductResponseDto;
@@ -112,7 +110,7 @@ describe('ProductResponseDto', () => {
 
 describe('CategoryResponseDto', () => {
   it('should be defined', () => {
-    const category = plainToClass(CategoryResponseDto, {
+    const category: CategoryResponseDto = plainToClass(CategoryResponseDto, {
       id: 'category-id',
       name: 'Test Category',
       slug: 'test-category',
@@ -129,7 +127,7 @@ describe('CategoryResponseDto', () => {
   });
 
   it('should handle optional description', () => {
-    const category = plainToClass(CategoryResponseDto, {
+    const category: CategoryResponseDto = plainToClass(CategoryResponseDto, {
       id: 'category-id',
       name: 'Test Category',
       slug: 'test-category',

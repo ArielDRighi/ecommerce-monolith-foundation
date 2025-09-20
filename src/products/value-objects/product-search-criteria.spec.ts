@@ -19,6 +19,7 @@ describe('ProductSearchCriteria', () => {
       addOrderBy: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
       getMany: jest.fn(),
       getOne: jest.fn(),
       getCount: jest.fn(),

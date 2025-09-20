@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { IsNull } from 'typeorm';
 import { CategoriesService } from './categories.service';
+import { DI_TOKENS } from '../common/tokens/di-tokens';
 import { Logger } from '@nestjs/common';
 
 describe('CategoriesService', () => {
@@ -22,7 +23,7 @@ describe('CategoriesService', () => {
       providers: [
         CategoriesService,
         {
-          provide: 'ICategoryRepository',
+          provide: DI_TOKENS.ICategoryRepository,
           useValue: mockCategoryRepository,
         },
         Logger,
