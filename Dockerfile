@@ -1,6 +1,6 @@
 # 🚀 Multi-stage Dockerfile optimizado para producción enterprise
 # Etapa 1: Dependencias base
-FROM node:18-alpine AS base
+FROM node:25-alpine AS base
 
 # Instalar dependencias del sistema y herramientas de seguridad
 RUN apk add --no-cache \
