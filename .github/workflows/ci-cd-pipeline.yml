@@ -123,7 +123,7 @@ jobs:
           JWT_REFRESH_SECRET: ${{ env.JWT_REFRESH_SECRET }}
 
       - name: 📊 Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-report
           path: coverage/
@@ -246,7 +246,7 @@ jobs:
           SERVICE_NAME: ecommerce-monolith
 
       - name: 📋 Upload E2E Test Results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: e2e-test-results
